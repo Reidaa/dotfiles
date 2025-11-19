@@ -11,3 +11,7 @@ disabled = true
 
 [bun]
 disabled = true
+
+[[battery.display]]
+threshold = 20
+style = "red bold"
