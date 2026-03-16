@@ -5,7 +5,5 @@ command_exists() {
 }
 
 if command_exists "starship"; then
-    eval "$(starship init ${shell})"
+	eval "$(starship init ${shell})"
 fi
-
-

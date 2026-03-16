@@ -5,6 +5,5 @@ command_exists() {
 }
 
 if command_exists "mise"; then
-    eval "$(mise activate ${shell})"
+	eval "$(mise activate ${shell})"
 fi
-
