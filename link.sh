@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -euo pipefail
+set -x
+
+
 # Function to check if a file exists
 # Usage: file_exists /path/to/file
 file_exists() {
@@ -15,13 +19,15 @@ file_exists() {
 mkdir -p "$HOME/.config"
 
 confs=(
-    "$(pwd)/starship.toml,$HOME/.config/starship.toml"
-    "$(pwd)/tmux.conf,$HOME/.config/tmux.conf"
+    "$(pwd)/starship/starship.toml,$HOME/.config/starship/starship.toml"
+    "$(pwd)/tmux/tmux.conf,$HOME/.tmux.conf"
 )
 
 for conf in "${confs[@]}"; do
     IFS=',' read -r src dest <<< "$conf"
-    if [ ! "$(file_exists "$src")" ] && [ ! -a "$dest" ]; then
+    mkdir -p "$(dirname "$dest")"
+    rm -f "$dest"
+    if [ -f "$src" ] && [ ! -e "$dest" ]; then
         ln -s "$src" "$dest"
     fi
 done
