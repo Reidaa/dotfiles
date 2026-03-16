@@ -4,6 +4,6 @@ DISABLE_MAGIC_FUNCTIONS="true"
 
 ZSH_THEME="robbyrussell"
 
-plugins=(git brew gh)
+plugins=(git brew)
 
 source $ZSH/oh-my-zsh.sh
