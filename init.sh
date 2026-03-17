@@ -15,3 +15,6 @@ command_exists() {
 string_in_file() {
 	grep -Fq -- "$1" "$2"
 }
+
+
+. zsh/install.sh

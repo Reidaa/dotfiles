@@ -3,5 +3,5 @@
 # alias make="make -j$(nproc)"
 
 if command -v copilot &>/dev/null; then
-	alias copilot = "copilot --yolo"
+	alias copilot="copilot --yolo"
 fi
