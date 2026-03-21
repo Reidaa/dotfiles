@@ -18,16 +18,16 @@ string_in_file() {
 }
 
 if command -v brew >/dev/null 2>&1; then
-	brew install atuin
-	if ! string_in_file "atuin" "${HOME}/.zshrc"; then
-		echo 'eval "$(atuin init zsh)"' >>"${HOME}/.zshrc"
+	brew install mise
+	if ! string_in_file "mise" "${HOME}/.zshrc"; then
+		echo 'eval "$(mise activate zsh)"' >>"${HOME}/.zshrc"
 	else
-		echo "atuin already sourced in .zshrc"
+		echo "mise already sourced in .zshrc"
 	fi
 else
-	if ! confirm "Install atuin by downloading and running the installation script?"; then
+	if ! confirm "Install mise by downloading and running the installation script?"; then
 		echo "Installation cancelled."
 		exit
 	fi
-	curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh
+	curl https://mise.run | sh
 fi
