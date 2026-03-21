@@ -1,5 +1,3 @@
-shell=$(basename "$SHELL")
-
 check_cmd() {
 	command -v "$1" >/dev/null 2>&1
 	return $?
@@ -11,6 +9,8 @@ need_cmd() {
 	fi
 }
 
-need_cmd starship
+shell=$(basename "$SHELL")
 
-eval "$(starship init ${shell})"
+need_cmd atuin
+
+eval "$(atuin init ${shell})"
