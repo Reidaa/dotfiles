@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install ShellCheck
+        run: sudo apt-get install -y shellcheck
+
+      - uses: taiki-e/install-action@just
+
+      - name: Run ShellCheck
+        run: just lint

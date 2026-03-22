@@ -1,0 +1,7 @@
+{
+    "[github-actions-workflow]": {
+        "editor.indentSize": "tabSize",
+        "editor.tabSize": 2,
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    }
+}
