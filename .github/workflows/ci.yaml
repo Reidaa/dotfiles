@@ -33,4 +33,3 @@ jobs:
 
       - name: Run ShellCheck
         run: just lint
-        continue-on-error: true
