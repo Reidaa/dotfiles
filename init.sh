@@ -16,4 +16,8 @@ string_in_file() {
 	grep -Fq -- "$1" "$2"
 }
 
-. zsh/install.sh
+. zsh/autosuggestions/install.sh
+. zsh/syntax-highlighting/install.sh
+. starship/install.sh
+. mise/install.sh
+. atuin/install.sh
