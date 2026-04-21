@@ -3,9 +3,11 @@ default:
 
 fmt:
     shfmt -w -s .
+    ruff format .
 
 fmt-check:
     shfmt -l -s .
+    ruff format --check .
 
 lint:
     shellcheck ./**/*.sh

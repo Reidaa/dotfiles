@@ -3,5 +3,8 @@
         "editor.indentSize": "tabSize",
         "editor.tabSize": 2,
         "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff"
     }
 }

@@ -27,7 +27,6 @@ else
 	curl https://mise.run | sh
 fi
 
-
 if ! string_in_file "mise" "${HOME}/.zshrc"; then
 	echo 'eval "$(mise activate zsh)"' >>"${HOME}/.zshrc"
 else
