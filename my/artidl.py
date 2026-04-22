@@ -42,7 +42,7 @@ def extract_archive(archive_path: str, target_dir: str) -> None:
 
 def artidl(archive_url: str) -> None:
     url_parts = archive_url.split("/")
-    target_dir = "/tmp/" + "/".join(url_parts[-3:])[:-len(".tar.gz")]
+    target_dir = "/tmp/" + "/".join(url_parts[-3:-1])
 
     os.makedirs(target_dir, exist_ok=True)
     with tempfile.NamedTemporaryFile(suffix=".tar.gz") as temp_file:
