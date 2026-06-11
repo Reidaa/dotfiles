@@ -7,7 +7,9 @@ repo_root="$(cd -- "${script_dir}/../.." && pwd)"
 
 . "${repo_root}/.template/lib.sh"
 
-if command -v brew >/dev/null 2>&1; then
+if command_exists mise; then
+	echo "mise already installed"
+elif command_exists brew; then
 	brew install mise
 else
 	if ! confirm "Install mise by downloading and running the installation script?"; then

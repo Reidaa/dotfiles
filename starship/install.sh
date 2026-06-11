@@ -7,7 +7,9 @@ repo_root="$(cd -- "${script_dir}/.." && pwd)"
 
 . "${repo_root}/.template/lib.sh"
 
-if command -v brew >/dev/null 2>&1; then
+if command_exists starship; then
+	echo "starship already installed"
+elif command_exists brew; then
 	brew install starship
 else
 	if ! confirm "Install starship by downloading and running the installation script?"; then
