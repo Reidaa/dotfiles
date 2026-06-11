@@ -64,6 +64,18 @@ class InstallPackageTests(unittest.TestCase):
         self.assertEqual("television", install_package.display_package_name(spec))
         self.assertEqual(["television"], install_package.installed_commands(spec))
 
+    def test_cargo_only_reports_missing_cargo(self) -> None:
+        runner = FakeRunner()
+        spec = install_package.PackageSpec.from_options({"cargo": "television"})
+
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            self.assertFalse(install_package.install_package_spec(spec, runner))
+
+        self.assertEqual([], runner.runs)
+        self.assertIn("Cargo is not available for television", stderr.getvalue())
+        self.assertNotIn("No allowed package manager available", stderr.getvalue())
+
     def test_command_only_spec_is_rejected(self) -> None:
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             install_package.parse_args(["--command", "television"])

@@ -236,19 +236,22 @@ def install_package_spec(spec: PackageSpec, runner: CommandRunner) -> bool:
                 )
 
     cargo_package = spec.options.get("cargo")
-    if cargo_package and runner.command_exists("cargo"):
-        installed_command = already_installed(spec, runner)
-        if installed_command:
-            print(f"{package_name} already installed ({installed_command} found)")
-            return True
-        print(f"Installing {cargo_package} with Cargo")
-        if runner.run(["cargo", "install", cargo_package]):
-            return True
-        print(
-            f"Cargo install failed for {cargo_package}, trying fallback installers",
-            file=sys.stderr,
-        )
-        failure_reason = f"Cargo install failed for {cargo_package}"
+    if cargo_package:
+        if runner.command_exists("cargo"):
+            installed_command = already_installed(spec, runner)
+            if installed_command:
+                print(f"{package_name} already installed ({installed_command} found)")
+                return True
+            print(f"Installing {cargo_package} with Cargo")
+            if runner.run(["cargo", "install", cargo_package]):
+                return True
+            print(
+                f"Cargo install failed for {cargo_package}, trying fallback installers",
+                file=sys.stderr,
+            )
+            failure_reason = f"Cargo install failed for {cargo_package}"
+        else:
+            failure_reason = f"Cargo is not available for {cargo_package}"
 
     install_script = spec.options.get("script")
     if install_script:
