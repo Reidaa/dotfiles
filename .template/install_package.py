@@ -4,67 +4,34 @@ from __future__ import annotations
 
 import argparse
 import os
-import platform
 import shlex
 import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
-from pathlib import Path
 
 
 USAGE = """\
-Flag format:
-  --brew package [--apt package] [--dnf package] [--command cmd]
-
-Package spec format:
-  brew-package
-  brew-package:system-package
-  brew-package:system-package,command=cmd|cmd,system=manager|manager,cargo=crate,script=url
-
 Examples:
   install_package.py --brew just --apt rust-just --command just
   install_package.py --brew tealdeer --command tldr
-  install_package.py ripgrep
-  install_package.py 'fd:fd-find,command=fd|fdfind' bat
-  install_package.py 'television:television,command=tv|television,system=pacman,cargo=television,script=https://alexpasmantier.github.io/television/install.sh'
+  install_package.py --brew ripgrep --command rg
+  install_package.py --brew fd --apt fd-find --command fd --command fdfind
+  install_package.py --brew television --pacman television --command tv \\
+      --command television --cargo television \\
+      --script https://alexpasmantier.github.io/television/install.sh
 
 Package managers are tried in priority order when multiple are given: Homebrew
 first, then apt-get, dnf, yum, pacman, and apk. Use --brew package, --apt
 package, --dnf package, --yum package, --pacman package, or --apk package to
-allow specific package managers. Use --cargo crate, --script url, cargo=crate,
-or script=url as fallbacks. Use --command cmd or command=cmd|cmd to skip
-installation when any of the listed commands already exists.
+allow specific package managers. Use --cargo crate or --script url as
+fallbacks. Use --command cmd to skip installation when any of the listed
+commands already exists; repeat the flag or separate names with |.
 """
 
 
 SUPPORTED_MANAGERS = ("apt-get", "dnf", "yum", "pacman", "apk")
 PACKAGE_MANAGERS = ("brew", *SUPPORTED_MANAGERS)
-
-TARGET_ALIASES = {
-    "apt-get": {
-        "apt",
-        "apt-get",
-        "debian",
-        "ubuntu",
-        "linuxmint",
-        "pop",
-        "elementary",
-        "zorin",
-        "raspbian",
-        "kali",
-        "devuan",
-    },
-    "dnf": {"dnf", "fedora"},
-    "yum": {"yum", "rhel", "centos", "rocky", "almalinux", "ol"},
-    "pacman": {"arch", "manjaro", "endeavouros", "garuda", "artix", "pacman"},
-    "apk": {"apk", "alpine"},
-}
-
-PACKAGE_OVERRIDE_KEYS = frozenset(
-    {"brew", "homebrew", *SUPPORTED_MANAGERS}
-    | {alias for aliases in TARGET_ALIASES.values() for alias in aliases}
-)
 
 
 @dataclass(frozen=True)
@@ -73,27 +40,6 @@ class PackageSpec:
     brew_name: str
     system_name: str
     options: dict[str, str]
-
-    @classmethod
-    def parse(cls, raw: str) -> "PackageSpec":
-        parts = raw.split(",")
-        base_spec = parts[0]
-
-        if ":" in base_spec:
-            brew_name, system_name = base_spec.split(":", 1)
-        else:
-            brew_name = system_name = base_spec
-
-        options: dict[str, str] = {}
-        for option in parts[1:]:
-            if "=" not in option:
-                continue
-            key, value = option.split("=", 1)
-            options[key.lower()] = value
-
-        return cls(
-            raw=raw, brew_name=brew_name, system_name=system_name, options=options
-        )
 
     @classmethod
     def from_options(cls, options: dict[str, str]) -> "PackageSpec":
@@ -144,60 +90,11 @@ class CommandRunner:
         )
 
 
-def read_os_release(path: str = "/etc/os-release") -> dict[str, str]:
-    os_release: dict[str, str] = {}
-    release_path = Path(path)
-    if not release_path.is_file():
-        return os_release
-
-    for line in release_path.read_text(encoding="utf-8").splitlines():
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        os_release[key] = shlex.split(value)[0] if value else ""
-
-    return os_release
-
-
-def detect_platform_key(os_release_path: str = "/etc/os-release") -> str:
-    os_release = read_os_release(os_release_path)
-    platform_key = os_release.get("ID", "")
-    if platform_key:
-        return platform_key
-
-    system_name = platform.system()
-    if system_name == "Darwin":
-        return "macos"
-
-    return system_name.lower()
-
-
-def target_matches(target: str, package_manager: str, platform_key: str) -> bool:
-    normalized_target = target.lower()
-    if normalized_target in {package_manager, platform_key}:
-        return True
-    if normalized_target in {"brew", "homebrew"}:
-        return package_manager == "brew"
-
-    aliases = TARGET_ALIASES.get(package_manager, set[str]())
-    return normalized_target in aliases
-
-
-def resolve_package_name(
-    spec: PackageSpec, package_manager: str, platform_key: str
-) -> str:
+def resolve_package_name(spec: PackageSpec, package_manager: str) -> str:
     if package_manager in spec.options:
         return spec.options[package_manager]
 
-    package_name = spec.brew_name if package_manager == "brew" else spec.system_name
-
-    for key, value in spec.options.items():
-        if key not in PACKAGE_OVERRIDE_KEYS:
-            continue
-        if target_matches(key, package_manager, platform_key):
-            return value
-
-    return package_name
+    return spec.brew_name if package_manager == "brew" else spec.system_name
 
 
 def installed_commands(spec: PackageSpec) -> list[str]:
@@ -216,33 +113,12 @@ def already_installed(spec: PackageSpec, runner: CommandRunner) -> str | None:
     return None
 
 
-def allowed_package_managers(spec: PackageSpec, platform_key: str) -> list[str]:
-    allowed: set[str] = set()
-
-    for manager in PACKAGE_MANAGERS:
-        if manager in spec.options:
-            allowed.add(manager)
-
-    system = spec.options.get("system")
-    if system:
-        for entry in system.split("|"):
-            entry = entry.strip()
-            if not entry:
-                continue
-            for manager in PACKAGE_MANAGERS:
-                if target_matches(entry, manager, platform_key):
-                    allowed.add(manager)
-
-    if not spec.raw.startswith("--") and spec.brew_name:
-        allowed.add("brew")
-
-    return [manager for manager in PACKAGE_MANAGERS if manager in allowed]
+def allowed_package_managers(spec: PackageSpec) -> list[str]:
+    return [manager for manager in PACKAGE_MANAGERS if manager in spec.options]
 
 
-def iter_package_managers(
-    runner: CommandRunner, spec: PackageSpec, platform_key: str
-):
-    for manager in allowed_package_managers(spec, platform_key):
+def iter_package_managers(runner: CommandRunner, spec: PackageSpec):
+    for manager in allowed_package_managers(spec):
         command = "brew" if manager == "brew" else manager
         if runner.command_exists(command):
             yield manager
@@ -283,33 +159,22 @@ def install_with_package_manager(
     return all(runner.run(command) for command in commands)
 
 
-def install_package(
-    raw_spec: str, runner: CommandRunner, os_release_path: str = "/etc/os-release"
-) -> bool:
-    return install_package_spec(PackageSpec.parse(raw_spec), runner, os_release_path)
-
-
-def display_package_name(
-    spec: PackageSpec, platform_key: str
-) -> str:
-    allowed = allowed_package_managers(spec, platform_key)
+def display_package_name(spec: PackageSpec) -> str:
+    allowed = allowed_package_managers(spec)
     if allowed:
-        return resolve_package_name(spec, allowed[0], platform_key)
+        return resolve_package_name(spec, allowed[0])
     return spec.brew_name
 
 
-def install_package_spec(
-    spec: PackageSpec, runner: CommandRunner, os_release_path: str = "/etc/os-release"
-) -> bool:
-    platform_key = detect_platform_key(os_release_path)
-    package_name = display_package_name(spec, platform_key)
+def install_package_spec(spec: PackageSpec, runner: CommandRunner) -> bool:
+    package_name = display_package_name(spec)
 
     installed_command = already_installed(spec, runner)
     if installed_command:
         print(f"{package_name} already installed ({installed_command} found)")
         return True
 
-    package_managers = list[str](iter_package_managers(runner, spec, platform_key))
+    package_managers = list[str](iter_package_managers(runner, spec))
     if not package_managers:
         print(
             f"No allowed package manager available for {spec.raw}",
@@ -317,9 +182,7 @@ def install_package_spec(
         )
     else:
         for index, package_manager in enumerate(package_managers):
-            manager_package_name = resolve_package_name(
-                spec, package_manager, platform_key
-            )
+            manager_package_name = resolve_package_name(spec, package_manager)
             print(f"Installing {manager_package_name} with {package_manager}")
             if install_with_package_manager(
                 runner, package_manager, manager_package_name
@@ -415,16 +278,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         epilog=USAGE,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("package_specs", metavar="package-spec", nargs="*")
     parser.add_argument(
         "--dry-run",
         action="store_true",
         help="print install commands without executing them",
-    )
-    parser.add_argument(
-        "--os-release",
-        default="/etc/os-release",
-        help=argparse.SUPPRESS,
     )
     parser.add_argument("--brew", "--homebrew", metavar="PACKAGE")
     parser.add_argument("--apt", "--apt-get", dest="apt", metavar="PACKAGE")
@@ -444,12 +301,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     )
 
     args = parser.parse_args(argv)
-    has_manager_flag = any(
-        package is not None for package in manager_flag_values(args).values()
-    )
-    if not args.package_specs and not has_manager_flag:
+    if spec_from_args(args) is None:
         parser.error(
-            "provide at least one package-spec or a package manager flag such as --brew"
+            "provide at least one package manager flag such as --brew"
         )
 
     return args
@@ -459,14 +313,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     runner = CommandRunner(dry_run=args.dry_run)
 
-    package_specs = [PackageSpec.parse(raw_spec) for raw_spec in args.package_specs]
-    option_spec = spec_from_args(args)
-    if option_spec:
-        package_specs.append(option_spec)
+    package_spec = spec_from_args(args)
+    assert package_spec is not None
 
-    for package_spec in package_specs:
-        if not install_package_spec(package_spec, runner, args.os_release):
-            return 1
+    if not install_package_spec(package_spec, runner):
+        return 1
 
     return 0
 
