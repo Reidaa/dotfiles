@@ -14,7 +14,7 @@ fmt-check:
     ruff format --check .
 
 lint:
-    shellcheck ./**/*.sh
+    shellcheck -x ./**/*.sh
 
 new cmd:
     cp -r .template/ "{{cmd}}"

@@ -12,7 +12,7 @@ python3 "${repo_root}/.template/install_package.py" \
 	--script https://starship.rs/install.sh
 
 if ! string_in_file "starship" "${HOME}/.zshrc"; then
-	echo 'eval "$(starship init zsh)"' >>"${HOME}/.zshrc"
+	echo "eval \"\$(starship init zsh)\"" >>"${HOME}/.zshrc"
 else
 	echo "starship already sourced in .zshrc"
 fi
