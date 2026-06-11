@@ -16,17 +16,15 @@ from pathlib import Path
 USAGE = """\
 Flag format:
   --brew package [--apt package] [--dnf package] [--command cmd]
-  --brew package [--target target=package]
 
 Package spec format:
   brew-package
   brew-package:system-package
-  brew-package:system-package,target=package,target=package
   brew-package:system-package,command=cmd|cmd,system=manager|manager,cargo=crate,script=url
 
 Examples:
   install_package.py --brew just --apt rust-just --command just
-  install_package.py --brew tealdeer --command tldr --target freebsd=sysutils/tealdeer
+  install_package.py --brew tealdeer --command tldr
   install_package.py ripgrep
   install_package.py 'fd:fd-find,command=fd|fdfind' bat
   install_package.py 'television:television,command=tv|television,system=pacman,cargo=television,script=https://alexpasmantier.github.io/television/install.sh'
@@ -36,8 +34,7 @@ it tries explicitly allowed system package managers. Use --apt package,
 --dnf package, --yum package, --pacman package, or --apk package to allow
 specific system package managers. Use --cargo crate, --script url, cargo=crate,
 or script=url as fallbacks. Use --command cmd or command=cmd|cmd to skip
-installation when any of the listed commands already exists. Use --target
-target=package for less common target-specific package names.
+installation when any of the listed commands already exists.
 """
 
 
@@ -62,6 +59,11 @@ TARGET_ALIASES = {
     "pacman": {"arch", "manjaro", "endeavouros", "garuda", "artix", "pacman"},
     "apk": {"apk", "alpine"},
 }
+
+PACKAGE_OVERRIDE_KEYS = frozenset(
+    {"brew", "homebrew", *SUPPORTED_MANAGERS}
+    | {alias for aliases in TARGET_ALIASES.values() for alias in aliases}
+)
 
 
 @dataclass(frozen=True)
@@ -112,8 +114,6 @@ class PackageSpec:
         for key, value in options.items():
             if key in named_options:
                 raw_parts.append(f"--{option_names.get(key, key)} {value}")
-            elif key != "system":
-                raw_parts.append(f"--target {key}={value}")
 
         return cls(
             raw=" ".join(raw_parts),
@@ -179,7 +179,7 @@ def target_matches(target: str, package_manager: str, platform_key: str) -> bool
     if normalized_target in {"brew", "homebrew"}:
         return package_manager == "brew"
 
-    aliases = TARGET_ALIASES.get(package_manager, set())
+    aliases = TARGET_ALIASES.get(package_manager, set[str]())
     return normalized_target in aliases
 
 
@@ -189,6 +189,8 @@ def resolve_package_name(
     package_name = spec.brew_name if package_manager == "brew" else spec.system_name
 
     for key, value in spec.options.items():
+        if key not in PACKAGE_OVERRIDE_KEYS:
+            continue
         if target_matches(key, package_manager, platform_key):
             return value
 
@@ -346,25 +348,11 @@ def pipe_join(values: list[str] | None) -> str | None:
     return "|".join(dict.fromkeys(items)) or None
 
 
-def target_options(values: list[str] | None) -> dict[str, str]:
-    options: dict[str, str] = {}
-
-    for value in values or []:
-        if "=" not in value:
-            raise ValueError("--target values must use target=package")
-        target, package = value.split("=", 1)
-        if not target or not package:
-            raise ValueError("--target values must use target=package")
-        options[target.lower()] = package
-
-    return options
-
-
 def spec_from_args(args: argparse.Namespace) -> PackageSpec | None:
     if args.brew is None:
         return None
 
-    options = target_options(args.target)
+    options: dict[str, str] = {}
     allowed_managers: list[str] = []
     named_options = {
         "apt-get": args.apt,
@@ -414,12 +402,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--cargo", metavar="CRATE")
     parser.add_argument("--script", metavar="URL")
     parser.add_argument(
-        "--target",
-        action="append",
-        metavar="TARGET=PACKAGE",
-        help="target-specific package mapping; repeat for uncommon targets",
-    )
-    parser.add_argument(
         "--command",
         "--cmd",
         dest="command",
@@ -431,10 +413,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     args = parser.parse_args(argv)
     if not args.package_specs and args.brew is None:
         parser.error("provide at least one package-spec or --brew PACKAGE")
-    try:
-        target_options(args.target)
-    except ValueError as error:
-        parser.error(str(error))
 
     return args
 
