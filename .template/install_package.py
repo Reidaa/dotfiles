@@ -93,10 +93,15 @@ class CommandRunner:
                 print("+ " + shlex.join(command))
             return True
 
-        return (
-            subprocess.run(command[0] if shell else command, shell=shell).returncode
-            == 0
-        )
+        try:
+            return (
+                subprocess.run(command[0] if shell else command, shell=shell).returncode
+                == 0
+            )
+        except FileNotFoundError:
+            executable = command[0]
+            print(f"Command not found: {executable}", file=sys.stderr)
+            return False
 
 
 def resolve_package_name(spec: PackageSpec, package_manager: str) -> str:

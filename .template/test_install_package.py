@@ -37,6 +37,19 @@ class FakeRunner:
         return self.run_result
 
 
+class SequenceRunner(FakeRunner):
+    def __init__(
+        self, *, commands: set[str] | None = None, run_results: list[bool] | None = None
+    ):
+        super().__init__(commands=commands)
+        self.run_results = run_results or []
+
+    def run(self, command: list[str], *, shell: bool = False) -> bool:
+        assert not shell
+        self.runs.append(command)
+        return self.run_results.pop(0)
+
+
 class InstallPackageTests(unittest.TestCase):
     def test_confirm_treats_eof_as_negative_answer(self) -> None:
         with mock.patch("builtins.input", side_effect=EOFError):
@@ -100,6 +113,41 @@ class InstallPackageTests(unittest.TestCase):
         self.assertIn(
             "curl -fsSL 'https://example.com/install.sh?name=two words' | bash",
             runner.runs[0][4],
+        )
+
+    def test_missing_executable_returns_false_with_clear_error(self) -> None:
+        runner = install_package.CommandRunner()
+
+        with mock.patch.object(
+            install_package.subprocess, "run", side_effect=FileNotFoundError
+        ):
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                self.assertFalse(runner.run(["sudo", "apt-get", "update"]))
+
+        self.assertIn("Command not found: sudo", stderr.getvalue())
+
+    def test_missing_sudo_allows_cargo_fallback(self) -> None:
+        runner = SequenceRunner(
+            commands={"apt-get", "cargo"},
+            run_results=[False, True],
+        )
+        spec = install_package.PackageSpec.from_options(
+            {"apt-get": "ripgrep", "cargo": "ripgrep", "command": "rg"}
+        )
+
+        with mock.patch.object(install_package.os, "geteuid", return_value=1000):
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                self.assertTrue(install_package.install_package_spec(spec, runner))
+
+        self.assertEqual(
+            [["sudo", "apt-get", "update"], ["cargo", "install", "ripgrep"]],
+            runner.runs,
+        )
+        self.assertIn(
+            "apt-get install failed for ripgrep, trying fallback installers",
+            stderr.getvalue(),
         )
 
 
