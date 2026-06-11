@@ -1,3 +1,7 @@
+i:
+    uv tool install ruff
+    go install mvdan.cc/sh/v3/cmd/shfmt@latest
+
 default:
     @just --list
 
