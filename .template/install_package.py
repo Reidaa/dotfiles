@@ -29,16 +29,17 @@ Examples:
   install_package.py 'fd:fd-find,command=fd|fdfind' bat
   install_package.py 'television:television,command=tv|television,system=pacman,cargo=television,script=https://alexpasmantier.github.io/television/install.sh'
 
-The script tries Homebrew first. If brew is unavailable or the install fails,
-it tries explicitly allowed system package managers. Use --apt package,
---dnf package, --yum package, --pacman package, or --apk package to allow
-specific system package managers. Use --cargo crate, --script url, cargo=crate,
+Package managers are tried in priority order when multiple are given: Homebrew
+first, then apt-get, dnf, yum, pacman, and apk. Use --brew package, --apt
+package, --dnf package, --yum package, --pacman package, or --apk package to
+allow specific package managers. Use --cargo crate, --script url, cargo=crate,
 or script=url as fallbacks. Use --command cmd or command=cmd|cmd to skip
 installation when any of the listed commands already exists.
 """
 
 
 SUPPORTED_MANAGERS = ("apt-get", "dnf", "yum", "pacman", "apk")
+PACKAGE_MANAGERS = ("brew", *SUPPORTED_MANAGERS)
 
 TARGET_ALIASES = {
     "apt-get": {
@@ -95,30 +96,29 @@ class PackageSpec:
         )
 
     @classmethod
-    def from_options(
-        cls, brew_name: str, options: dict[str, str]
-    ) -> "PackageSpec":
-        raw_parts = [f"--brew {brew_name}"]
+    def from_options(cls, options: dict[str, str]) -> "PackageSpec":
+        option_names = {"apt-get": "apt", "brew": "brew"}
+        raw_parts: list[str] = []
 
-        option_names = {"apt-get": "apt"}
-        named_options = {
-            "apt-get",
-            "dnf",
-            "yum",
-            "pacman",
-            "apk",
-            "cargo",
-            "script",
-            "command",
-        }
-        for key, value in options.items():
-            if key in named_options:
-                raw_parts.append(f"--{option_names.get(key, key)} {value}")
+        for manager in PACKAGE_MANAGERS:
+            package = options.get(manager)
+            if package is not None:
+                raw_parts.append(f"--{option_names.get(manager, manager)} {package}")
+
+        for key in ("cargo", "script", "command"):
+            value = options.get(key)
+            if value is not None:
+                raw_parts.append(f"--{key} {value}")
+
+        default_name = next(
+            (options[manager] for manager in PACKAGE_MANAGERS if manager in options),
+            "package",
+        )
 
         return cls(
             raw=" ".join(raw_parts),
-            brew_name=brew_name,
-            system_name=brew_name,
+            brew_name=default_name,
+            system_name=default_name,
             options=options,
         )
 
@@ -186,6 +186,9 @@ def target_matches(target: str, package_manager: str, platform_key: str) -> bool
 def resolve_package_name(
     spec: PackageSpec, package_manager: str, platform_key: str
 ) -> str:
+    if package_manager in spec.options:
+        return spec.options[package_manager]
+
     package_name = spec.brew_name if package_manager == "brew" else spec.system_name
 
     for key, value in spec.options.items():
@@ -213,21 +216,36 @@ def already_installed(spec: PackageSpec, runner: CommandRunner) -> str | None:
     return None
 
 
-def pick_system_manager(
+def allowed_package_managers(spec: PackageSpec, platform_key: str) -> list[str]:
+    allowed: set[str] = set()
+
+    for manager in PACKAGE_MANAGERS:
+        if manager in spec.options:
+            allowed.add(manager)
+
+    system = spec.options.get("system")
+    if system:
+        for entry in system.split("|"):
+            entry = entry.strip()
+            if not entry:
+                continue
+            for manager in PACKAGE_MANAGERS:
+                if target_matches(entry, manager, platform_key):
+                    allowed.add(manager)
+
+    if not spec.raw.startswith("--") and spec.brew_name:
+        allowed.add("brew")
+
+    return [manager for manager in PACKAGE_MANAGERS if manager in allowed]
+
+
+def iter_package_managers(
     runner: CommandRunner, spec: PackageSpec, platform_key: str
-) -> str | None:
-    allowed = spec.options.get("system")
-    if not allowed:
-        return None
-
-    for allowed_manager in allowed.split("|"):
-        for supported in SUPPORTED_MANAGERS:
-            if target_matches(
-                allowed_manager, supported, platform_key
-            ) and runner.command_exists(supported):
-                return supported
-
-    return None
+):
+    for manager in allowed_package_managers(spec, platform_key):
+        command = "brew" if manager == "brew" else manager
+        if runner.command_exists(command):
+            yield manager
 
 
 def confirm(prompt: str) -> bool:
@@ -241,9 +259,12 @@ def root_command(command: list[str]) -> list[str]:
     return ["sudo", *command]
 
 
-def install_with_system_manager(
+def install_with_package_manager(
     runner: CommandRunner, package_manager: str, package_name: str
 ) -> bool:
+    if package_manager == "brew":
+        return runner.run(["brew", "install", package_name])
+
     commands = {
         "apt-get": [
             root_command(["apt-get", "update"]),
@@ -268,49 +289,58 @@ def install_package(
     return install_package_spec(PackageSpec.parse(raw_spec), runner, os_release_path)
 
 
+def display_package_name(
+    spec: PackageSpec, platform_key: str
+) -> str:
+    allowed = allowed_package_managers(spec, platform_key)
+    if allowed:
+        return resolve_package_name(spec, allowed[0], platform_key)
+    return spec.brew_name
+
+
 def install_package_spec(
     spec: PackageSpec, runner: CommandRunner, os_release_path: str = "/etc/os-release"
 ) -> bool:
     platform_key = detect_platform_key(os_release_path)
-    brew_package_name = resolve_package_name(spec, "brew", platform_key)
+    package_name = display_package_name(spec, platform_key)
 
     installed_command = already_installed(spec, runner)
     if installed_command:
-        print(f"{brew_package_name} already installed ({installed_command} found)")
+        print(f"{package_name} already installed ({installed_command} found)")
         return True
 
-    if runner.command_exists("brew"):
-        print(f"Installing {brew_package_name} with Homebrew")
-        if runner.run(["brew", "install", brew_package_name]):
-            return True
+    package_managers = list[str](iter_package_managers(runner, spec, platform_key))
+    if not package_managers:
         print(
-            f"Homebrew install failed for {brew_package_name}, trying the system package manager",
+            f"No allowed package manager available for {spec.raw}",
             file=sys.stderr,
         )
     else:
-        print(f"Homebrew not found, trying the system package manager for {spec.raw}")
-
-    package_manager = pick_system_manager(runner, spec, platform_key)
-    if package_manager is None:
-        print(
-            f"No allowed system package manager available for {spec.raw}",
-            file=sys.stderr,
-        )
-    else:
-        system_package_name = resolve_package_name(spec, package_manager, platform_key)
-        print(f"Installing {system_package_name} with {package_manager}")
-        if install_with_system_manager(runner, package_manager, system_package_name):
-            return True
-        print(
-            f"{package_manager} install failed for {system_package_name}, trying fallback installers",
-            file=sys.stderr,
-        )
+        for index, package_manager in enumerate(package_managers):
+            manager_package_name = resolve_package_name(
+                spec, package_manager, platform_key
+            )
+            print(f"Installing {manager_package_name} with {package_manager}")
+            if install_with_package_manager(
+                runner, package_manager, manager_package_name
+            ):
+                return True
+            if index < len(package_managers) - 1:
+                print(
+                    f"{package_manager} install failed for {manager_package_name}, trying the next package manager",
+                    file=sys.stderr,
+                )
+            else:
+                print(
+                    f"{package_manager} install failed for {manager_package_name}, trying fallback installers",
+                    file=sys.stderr,
+                )
 
     cargo_package = spec.options.get("cargo")
     if cargo_package and runner.command_exists("cargo"):
         installed_command = already_installed(spec, runner)
         if installed_command:
-            print(f"{brew_package_name} already installed ({installed_command} found)")
+            print(f"{package_name} already installed ({installed_command} found)")
             return True
         print(f"Installing {cargo_package} with Cargo")
         if runner.run(["cargo", "install", cargo_package]):
@@ -324,10 +354,10 @@ def install_package_spec(
     if install_script:
         installed_command = already_installed(spec, runner)
         if installed_command:
-            print(f"{brew_package_name} already installed ({installed_command} found)")
+            print(f"{package_name} already installed ({installed_command} found)")
             return True
         if runner.dry_run or confirm(
-            f"Install {brew_package_name} by downloading and running {install_script}?"
+            f"Install {package_name} by downloading and running {install_script}?"
         ):
             return runner.run(
                 [f"curl -fsSL {shlex.quote(install_script)} | bash"], shell=True
@@ -348,37 +378,40 @@ def pipe_join(values: list[str] | None) -> str | None:
     return "|".join(dict.fromkeys(items)) or None
 
 
-def spec_from_args(args: argparse.Namespace) -> PackageSpec | None:
-    if args.brew is None:
-        return None
-
-    options: dict[str, str] = {}
-    allowed_managers: list[str] = []
-    named_options = {
+def manager_flag_values(args: argparse.Namespace) -> dict[str, str | None]:
+    return {
+        "brew": args.brew,
         "apt-get": args.apt,
         "dnf": args.dnf,
         "yum": args.yum,
         "pacman": args.pacman,
         "apk": args.apk,
+    }
+
+
+def spec_from_args(args: argparse.Namespace) -> PackageSpec | None:
+    options: dict[str, str] = {}
+    for manager, package in manager_flag_values(args).items():
+        if package is not None:
+            options[manager] = package
+
+    for key, value in {
         "cargo": args.cargo,
         "script": args.script,
         "command": pipe_join(args.command),
-    }
-    for key, value in named_options.items():
+    }.items():
         if value is not None:
             options[key] = value
-            if key in SUPPORTED_MANAGERS:
-                allowed_managers.append(key)
 
-    if allowed_managers:
-        options["system"] = "|".join(allowed_managers)
+    if not any(manager in options for manager in PACKAGE_MANAGERS):
+        return None
 
-    return PackageSpec.from_options(args.brew, options)
+    return PackageSpec.from_options(options)
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Install packages using Homebrew, an explicitly allowed system manager, Cargo, or script fallback.",
+        description="Install packages using allowed package managers, Cargo, or script fallback.",
         epilog=USAGE,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -411,8 +444,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     )
 
     args = parser.parse_args(argv)
-    if not args.package_specs and args.brew is None:
-        parser.error("provide at least one package-spec or --brew PACKAGE")
+    has_manager_flag = any(
+        package is not None for package in manager_flag_values(args).values()
+    )
+    if not args.package_specs and not has_manager_flag:
+        parser.error(
+            "provide at least one package-spec or a package manager flag such as --brew"
+        )
 
     return args
 
