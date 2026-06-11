@@ -3,13 +3,19 @@
 set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-shell=$(basename "$SHELL")
 
-. "${script_dir}/.template/lib.sh"
+run_installer() {
+	local installer="$1"
 
-. "${script_dir}/zsh/autosuggestions/install.sh"
-. "${script_dir}/zsh/syntax-highlighting/install.sh"
-. "${script_dir}/starship/install.sh"
-. "${script_dir}/cli/mise/install.sh"
-. "${script_dir}/cli/atuin/install.sh"
+	echo "Running ${installer#"$script_dir"/}"
+	bash "$installer"
+}
+
+run_installer "${script_dir}/zsh/autosuggestions/install.sh"
+run_installer "${script_dir}/zsh/syntax-highlighting/install.sh"
+run_installer "${script_dir}/starship/install.sh"
+
+for installer in "${script_dir}"/cli/*/install.sh; do
+	run_installer "$installer"
+done
 # . my/install.sh
