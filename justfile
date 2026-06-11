@@ -16,5 +16,8 @@ fmt-check:
 lint:
     shellcheck -x ./**/*.sh
 
-new cmd:
-    cp -r .template/ "{{cmd}}"
+clean:
+    find . -type f -name "*.pyc" -delete
+    find . -type d -name "__pycache__" -delete
+    rm -rf dist build .egg-info .ruff_cache
+
