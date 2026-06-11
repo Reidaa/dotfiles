@@ -1,21 +1,11 @@
 #!/usr/bin/env bash
 
-confirm() {
-	local prompt="${1:-Continue?}"
-	local reply
+set -euo pipefail
 
-	read -r -p "${prompt} [y/N] " reply
-	case "$reply" in
-	[yY] | [yY][eE][sS]) return 0 ;;
-	*) return 1 ;;
-	esac
-}
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd -- "${script_dir}/.." && pwd)"
 
-# Check whether a string exists in a file.
-# Usage: string_in_file "needle" /path/to/file
-string_in_file() {
-	grep -Fq -- "$1" "$2"
-}
+. "${repo_root}/.template/lib.sh"
 
 if command -v brew >/dev/null 2>&1; then
 	brew install starship

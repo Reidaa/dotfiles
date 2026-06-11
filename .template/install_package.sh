@@ -328,7 +328,7 @@ install_with_system_manager() {
 		;;
 	nix)
 		if command -v nix >/dev/null 2>&1; then
-			if [[ "$package_name" == *"#"* ]]; then
+			if [[ $package_name == *"#"* ]]; then
 				nix profile install "$package_name"
 			else
 				nix profile install "nixpkgs#$package_name"
@@ -376,11 +376,11 @@ install_package() {
 		fi
 		echo "Homebrew install failed for ${brew_package_name}, trying the system package manager" >&2
 	else
-		echo "Homebrew not found, trying the system package manager for ${system_package_name}"
+		echo "Homebrew not found, trying the system package manager for ${package_spec}"
 	fi
 
 	if ! package_manager="$(detect_package_manager)"; then
-		echo "Could not infer a supported system package manager for ${system_package_name}" >&2
+		echo "Could not infer a supported system package manager for ${package_spec}" >&2
 		return 1
 	fi
 
@@ -403,4 +403,6 @@ main() {
 	done
 }
 
-main "$@"
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+	main "$@"
+fi
