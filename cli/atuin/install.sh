@@ -8,7 +8,9 @@ repo_root="$(cd -- "${script_dir}/../.." && pwd)"
 . "${repo_root}/.template/lib.sh"
 . "${repo_root}/.template/install_package.sh"
 
-install_package "atuin,script=https://setup.atuin.sh"
+install_package \
+	--brew atuin \
+	--script https://setup.atuin.sh
 
 if ! string_in_file "atuin" "${HOME}/.zshrc"; then
 	echo 'eval "$(atuin init zsh)"' >>"${HOME}/.zshrc"

@@ -8,7 +8,7 @@ repo_root="$(cd -- "${script_dir}/../.." && pwd)"
 . "${repo_root}/.template/lib.sh"
 . "${repo_root}/.template/install_package.sh"
 
-install_package "eza"
+install_package --brew eza
 
 if ! string_in_file "eza" "${HOME}/.zshrc"; then
 	echo 'alias ls="eza"' >>"${HOME}/.zshrc"

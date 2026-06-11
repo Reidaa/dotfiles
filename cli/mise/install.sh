@@ -8,7 +8,9 @@ repo_root="$(cd -- "${script_dir}/../.." && pwd)"
 . "${repo_root}/.template/lib.sh"
 . "${repo_root}/.template/install_package.sh"
 
-install_package "mise,script=https://mise.run"
+install_package \
+	--brew mise \
+	--script https://mise.run
 
 if ! string_in_file "mise" "${HOME}/.zshrc"; then
 	echo 'eval "$(mise activate zsh)"' >>"${HOME}/.zshrc"

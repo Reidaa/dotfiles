@@ -5,4 +5,4 @@ set -euo pipefail
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${script_dir}/../.." && pwd)"
 
-exec "${repo_root}/.template/install_package.sh" "just:rust-just,command=just"
+exec "${repo_root}/.template/install_package.sh" --brew just --apt rust-just --command just

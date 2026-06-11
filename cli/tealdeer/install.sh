@@ -5,4 +5,6 @@ set -euo pipefail
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${script_dir}/../.." && pwd)"
 
-exec "${repo_root}/.template/install_package.sh" "tealdeer:tealdeer,command=tldr,freebsd=sysutils/tealdeer,funtoo=app-misc/tealdeer,netbsd=sysutils/tealdeer"
+exec "${repo_root}/.template/install_package.sh" \
+	--brew tealdeer \
+	--command tldr
