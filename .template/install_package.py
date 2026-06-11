@@ -56,9 +56,18 @@ class PackageSpec:
             if value is not None:
                 raw_parts.append(f"--{key} {value}")
 
-        default_name = next(
-            (options[manager] for manager in PACKAGE_MANAGERS if manager in options),
-            "package",
+        default_name = (
+            next(
+                (
+                    options[manager]
+                    for manager in PACKAGE_MANAGERS
+                    if manager in options
+                ),
+                None,
+            )
+            or options.get("cargo")
+            or next(iter((options.get("command") or "").split("|")), None)
+            or "package"
         )
 
         return cls(
@@ -102,7 +111,18 @@ def installed_commands(spec: PackageSpec) -> list[str]:
     if configured_commands:
         return [command for command in configured_commands.split("|") if command]
 
-    return list[str](dict.fromkeys([spec.brew_name, spec.system_name]))
+    return list(
+        dict.fromkeys(
+            [
+                *(
+                    spec.options[manager]
+                    for manager in PACKAGE_MANAGERS
+                    if manager in spec.options
+                ),
+                *([spec.options["cargo"]] if "cargo" in spec.options else []),
+            ]
+        )
+    )
 
 
 def already_installed(spec: PackageSpec, runner: CommandRunner) -> str | None:
@@ -125,7 +145,10 @@ def iter_package_managers(runner: CommandRunner, spec: PackageSpec):
 
 
 def confirm(prompt: str) -> bool:
-    reply = input(f"{prompt} [y/N] ")
+    try:
+        reply = input(f"{prompt} [y/N] ")
+    except EOFError:
+        return False
     return reply.lower() in {"y", "yes"}
 
 
@@ -148,7 +171,9 @@ def install_with_package_manager(
         ],
         "dnf": [root_command(["dnf", "install", "-y", package_name])],
         "yum": [root_command(["yum", "install", "-y", package_name])],
-        "pacman": [root_command(["pacman", "-Sy", "--noconfirm", package_name])],
+        "pacman": [
+            root_command(["pacman", "-S", "--needed", "--noconfirm", package_name])
+        ],
         "apk": [root_command(["apk", "add", package_name])],
     }.get(package_manager)
 
@@ -163,7 +188,12 @@ def display_package_name(spec: PackageSpec) -> str:
     allowed = allowed_package_managers(spec)
     if allowed:
         return resolve_package_name(spec, allowed[0])
-    return spec.brew_name
+    return (
+        spec.options.get("cargo")
+        or next(iter(installed_commands(spec)), None)
+        or spec.options.get("script")
+        or "package"
+    )
 
 
 def install_package_spec(spec: PackageSpec, runner: CommandRunner) -> bool:
@@ -174,13 +204,11 @@ def install_package_spec(spec: PackageSpec, runner: CommandRunner) -> bool:
         print(f"{package_name} already installed ({installed_command} found)")
         return True
 
-    package_managers = list[str](iter_package_managers(runner, spec))
+    package_managers = list(iter_package_managers(runner, spec))
     if not package_managers:
-        print(
-            f"No allowed package manager available for {spec.raw}",
-            file=sys.stderr,
-        )
+        failure_reason = f"No allowed package manager available for {spec.raw}"
     else:
+        failure_reason = None
         for index, package_manager in enumerate(package_managers):
             manager_package_name = resolve_package_name(spec, package_manager)
             print(f"Installing {manager_package_name} with {package_manager}")
@@ -198,6 +226,9 @@ def install_package_spec(spec: PackageSpec, runner: CommandRunner) -> bool:
                     f"{package_manager} install failed for {manager_package_name}, trying fallback installers",
                     file=sys.stderr,
                 )
+                failure_reason = (
+                    f"{package_manager} install failed for {manager_package_name}"
+                )
 
     cargo_package = spec.options.get("cargo")
     if cargo_package and runner.command_exists("cargo"):
@@ -212,6 +243,7 @@ def install_package_spec(spec: PackageSpec, runner: CommandRunner) -> bool:
             f"Cargo install failed for {cargo_package}, trying fallback installers",
             file=sys.stderr,
         )
+        failure_reason = f"Cargo install failed for {cargo_package}"
 
     install_script = spec.options.get("script")
     if install_script:
@@ -222,13 +254,26 @@ def install_package_spec(spec: PackageSpec, runner: CommandRunner) -> bool:
         if runner.dry_run or confirm(
             f"Install {package_name} by downloading and running {install_script}?"
         ):
-            return runner.run(
-                [f"curl -fsSL {shlex.quote(install_script)} | bash"], shell=True
-            )
+            if runner.run(
+                [
+                    "bash",
+                    "-o",
+                    "pipefail",
+                    "-c",
+                    f"curl -fsSL {shlex.quote(install_script)} | bash",
+                ]
+            ):
+                return True
+            if failure_reason:
+                print(failure_reason, file=sys.stderr)
+            print(f"Script installer failed for {install_script}", file=sys.stderr)
+            return False
 
         print("Installation cancelled.")
         return False
 
+    if failure_reason:
+        print(failure_reason, file=sys.stderr)
     print(f"No fallback installer available for {spec.raw}", file=sys.stderr)
     return False
 
@@ -266,7 +311,11 @@ def spec_from_args(args: argparse.Namespace) -> PackageSpec | None:
         if value is not None:
             options[key] = value
 
-    if not any(manager in options for manager in PACKAGE_MANAGERS):
+    if not (
+        any(manager in options for manager in PACKAGE_MANAGERS)
+        or "cargo" in options
+        or "script" in options
+    ):
         return None
 
     return PackageSpec.from_options(options)
@@ -303,7 +352,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     args = parser.parse_args(argv)
     if spec_from_args(args) is None:
         parser.error(
-            "provide at least one package manager flag such as --brew"
+            "provide at least one installer flag such as --brew, --cargo, or --script"
         )
 
     return args
