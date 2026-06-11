@@ -15,7 +15,7 @@ from pathlib import Path
 
 USAGE = """\
 Flag format:
-  --brew package [--system-package package] [--apt package] [--dnf package] [--command cmd]
+  --brew package [--apt package] [--dnf package] [--command cmd]
   --brew package [--target target=package]
 
 Package spec format:
@@ -94,11 +94,9 @@ class PackageSpec:
 
     @classmethod
     def from_options(
-        cls, brew_name: str, system_name: str | None, options: dict[str, str]
+        cls, brew_name: str, options: dict[str, str]
     ) -> "PackageSpec":
         raw_parts = [f"--brew {brew_name}"]
-        if system_name and system_name != brew_name:
-            raw_parts.append(f"--system-package {system_name}")
 
         option_names = {"apt-get": "apt"}
         named_options = {
@@ -120,7 +118,7 @@ class PackageSpec:
         return cls(
             raw=" ".join(raw_parts),
             brew_name=brew_name,
-            system_name=system_name or brew_name,
+            system_name=brew_name,
             options=options,
         )
 
@@ -387,7 +385,7 @@ def spec_from_args(args: argparse.Namespace) -> PackageSpec | None:
     if allowed_managers:
         options["system"] = "|".join(allowed_managers)
 
-    return PackageSpec.from_options(args.brew, args.system_package, options)
+    return PackageSpec.from_options(args.brew, options)
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -408,11 +406,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help=argparse.SUPPRESS,
     )
     parser.add_argument("--brew", "--homebrew", metavar="PACKAGE")
-    parser.add_argument(
-        "--system-package",
-        metavar="PACKAGE",
-        help="default package name for supported non-Homebrew system package managers",
-    )
     parser.add_argument("--apt", "--apt-get", dest="apt", metavar="PACKAGE")
     parser.add_argument("--dnf", metavar="PACKAGE")
     parser.add_argument("--yum", metavar="PACKAGE")
