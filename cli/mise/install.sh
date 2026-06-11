@@ -6,9 +6,8 @@ script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${script_dir}/../.." && pwd)"
 
 . "${repo_root}/.template/lib.sh"
-. "${repo_root}/.template/install_package.sh"
 
-install_package \
+python3 "${repo_root}/.template/install_package.py" \
 	--brew mise \
 	--script https://mise.run
 
