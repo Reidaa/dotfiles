@@ -8,6 +8,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 
@@ -26,7 +27,7 @@ first, then apt-get, dnf, yum, pacman, and apk. Use --brew package, --apt
 package, --dnf package, --yum package, --pacman package, or --apk package to
 allow specific package managers. Use --cargo crate or --script url as
 fallbacks. Use --command cmd to skip installation when any of the listed
-commands already exists; repeat the flag or separate names with |.
+commands already exists; repeat the flag to list multiple commands.
 """
 
 
@@ -40,21 +41,37 @@ class PackageSpec:
     brew_name: str
     system_name: str
     options: dict[str, str]
+    commands: tuple[str, ...] = ()
 
     @classmethod
-    def from_options(cls, options: dict[str, str]) -> "PackageSpec":
+    def from_options(
+        cls, options: dict[str, str], commands: Sequence[str] | None = None
+    ) -> "PackageSpec":
         option_names = {"apt-get": "apt", "brew": "brew"}
         raw_parts: list[str] = []
+        command_values = (
+            commands
+            if commands is not None
+            else [options["command"]]
+            if "command" in options
+            else []
+        )
+        configured_commands = tuple(
+            dict.fromkeys(command for command in command_values if command)
+        )
 
         for manager in PACKAGE_MANAGERS:
             package = options.get(manager)
             if package is not None:
                 raw_parts.append(f"--{option_names.get(manager, manager)} {package}")
 
-        for key in ("cargo", "script", "command"):
+        for key in ("cargo", "script"):
             value = options.get(key)
             if value is not None:
                 raw_parts.append(f"--{key} {value}")
+
+        for command in configured_commands:
+            raw_parts.append(f"--command {command}")
 
         default_name = (
             next(
@@ -66,7 +83,7 @@ class PackageSpec:
                 None,
             )
             or options.get("cargo")
-            or next(iter((options.get("command") or "").split("|")), None)
+            or next(iter(configured_commands), None)
             or "package"
         )
 
@@ -75,6 +92,7 @@ class PackageSpec:
             brew_name=default_name,
             system_name=default_name,
             options=options,
+            commands=configured_commands,
         )
 
 
@@ -112,9 +130,8 @@ def resolve_package_name(spec: PackageSpec, package_manager: str) -> str:
 
 
 def installed_commands(spec: PackageSpec) -> list[str]:
-    configured_commands = spec.options.get("command")
-    if configured_commands:
-        return [command for command in configured_commands.split("|") if command]
+    if spec.commands:
+        return list(spec.commands)
 
     return list(
         dict.fromkeys(
@@ -286,36 +303,20 @@ def install_package_spec(spec: PackageSpec, runner: CommandRunner) -> bool:
     return False
 
 
-def pipe_join(values: list[str] | None) -> str | None:
-    if not values:
-        return None
-
-    items = [item for value in values for item in value.split("|") if item]
-    return "|".join(dict.fromkeys(items)) or None
-
-
-def manager_flag_values(args: argparse.Namespace) -> dict[str, str | None]:
-    return {
+def spec_from_args(args: argparse.Namespace) -> PackageSpec | None:
+    raw_options: dict[str, str | None] = {
         "brew": args.brew,
         "apt-get": args.apt,
         "dnf": args.dnf,
         "yum": args.yum,
         "pacman": args.pacman,
         "apk": args.apk,
-    }
-
-
-def spec_from_args(args: argparse.Namespace) -> PackageSpec | None:
-    options: dict[str, str] = {}
-    for manager, package in manager_flag_values(args).items():
-        if package is not None:
-            options[manager] = package
-
-    for key, value in {
         "cargo": args.cargo,
         "script": args.script,
-        "command": pipe_join(args.command),
-    }.items():
+    }
+    options: dict[str, str] = {}
+
+    for key, value in raw_options.items():
         if value is not None:
             options[key] = value
 
@@ -326,7 +327,7 @@ def spec_from_args(args: argparse.Namespace) -> PackageSpec | None:
     ):
         return None
 
-    return PackageSpec.from_options(options)
+    return PackageSpec.from_options(options, commands=args.command)
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -354,7 +355,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         dest="command",
         action="append",
         metavar="COMMAND",
-        help="command to check before installing; repeat or separate with |",
+        help="command to check before installing; repeat to list multiple commands",
     )
 
     args = parser.parse_args(argv)

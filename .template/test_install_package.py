@@ -80,6 +80,16 @@ class InstallPackageTests(unittest.TestCase):
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             install_package.parse_args(["--command", "television"])
 
+    def test_command_pipe_is_treated_as_literal_command_text(self) -> None:
+        args = install_package.parse_args(
+            ["--brew", "fd", "--command", "fd|fdfind", "--command", "fd"]
+        )
+        spec = install_package.spec_from_args(args)
+
+        self.assertIsNotNone(spec)
+        assert spec is not None
+        self.assertEqual(["fd|fdfind", "fd"], install_package.installed_commands(spec))
+
     def test_script_only_spec_does_not_check_script_basename_on_path(self) -> None:
         runner = FakeRunner(commands={"install.sh"})
         spec = install_package.PackageSpec.from_options(
