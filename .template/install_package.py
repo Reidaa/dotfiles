@@ -47,7 +47,7 @@ class PackageSpec:
     def from_options(
         cls, options: dict[str, str], commands: Sequence[str] | None = None
     ) -> "PackageSpec":
-        option_names = {"apt-get": "apt", "brew": "brew"}
+        option_names = {"apt-get": "apt"}
         raw_parts: list[str] = []
         command_values = (
             commands
@@ -96,12 +96,12 @@ class PackageSpec:
         )
 
 
+def command_exists(command: str) -> bool:
+    return shutil.which(command) is not None
+    
 @dataclass(frozen=True)
 class CommandRunner:
     dry_run: bool = False
-
-    def command_exists(self, command: str) -> bool:
-        return shutil.which(command) is not None
 
     def run(self, command: list[str], *, shell: bool = False) -> bool:
         if self.dry_run:
@@ -147,9 +147,9 @@ def installed_commands(spec: PackageSpec) -> list[str]:
     )
 
 
-def already_installed(spec: PackageSpec, runner: CommandRunner) -> str | None:
+def already_installed(spec: PackageSpec) -> str | None:
     for command in installed_commands(spec):
-        if runner.command_exists(command):
+        if command_exists(command):
             return command
 
     return None
@@ -159,10 +159,9 @@ def allowed_package_managers(spec: PackageSpec) -> list[str]:
     return [manager for manager in PACKAGE_MANAGERS if manager in spec.options]
 
 
-def iter_package_managers(runner: CommandRunner, spec: PackageSpec):
+def iter_package_managers(spec: PackageSpec):
     for manager in allowed_package_managers(spec):
-        command = "brew" if manager == "brew" else manager
-        if runner.command_exists(command):
+        if command_exists(manager):
             yield manager
 
 
@@ -221,12 +220,12 @@ def display_package_name(spec: PackageSpec) -> str:
 def install_package_spec(spec: PackageSpec, runner: CommandRunner) -> bool:
     package_name = display_package_name(spec)
 
-    installed_command = already_installed(spec, runner)
+    installed_command = already_installed(spec)
     if installed_command:
         print(f"{package_name} already installed ({installed_command} found)")
         return True
 
-    package_managers = list(iter_package_managers(runner, spec))
+    package_managers = list(iter_package_managers(spec))
     if not package_managers:
         failure_reason = f"No allowed package manager available for {spec.raw}"
     else:
@@ -254,11 +253,7 @@ def install_package_spec(spec: PackageSpec, runner: CommandRunner) -> bool:
 
     cargo_package = spec.options.get("cargo")
     if cargo_package:
-        if runner.command_exists("cargo"):
-            installed_command = already_installed(spec, runner)
-            if installed_command:
-                print(f"{package_name} already installed ({installed_command} found)")
-                return True
+        if command_exists("cargo"):
             print(f"Installing {cargo_package} with Cargo")
             if runner.run(["cargo", "install", cargo_package]):
                 return True
@@ -272,10 +267,6 @@ def install_package_spec(spec: PackageSpec, runner: CommandRunner) -> bool:
 
     install_script = spec.options.get("script")
     if install_script:
-        installed_command = already_installed(spec, runner)
-        if installed_command:
-            print(f"{package_name} already installed ({installed_command} found)")
-            return True
         if runner.dry_run or confirm(
             f"Install {package_name} by downloading and running {install_script}?"
         ):

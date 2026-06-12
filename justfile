@@ -14,7 +14,13 @@ fmt-check:
     ruff format --check .
 
 lint:
-    shellcheck -x ./**/*.sh
+    #!/usr/bin/env bash
+    status=0
+
+    shellcheck -x ./**/*.sh || status=1
+    ruff check . || status=1
+
+    exit $status
 
 clean:
     find . -type f -name "*.pyc" -delete
