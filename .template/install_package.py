@@ -98,7 +98,8 @@ class PackageSpec:
 
 def command_exists(command: str) -> bool:
     return shutil.which(command) is not None
-    
+
+
 @dataclass(frozen=True)
 class CommandRunner:
     dry_run: bool = False
