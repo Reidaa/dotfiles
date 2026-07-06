@@ -11,3 +11,15 @@ if command -v copilot &>/dev/null; then
 fi
 
 alias zshrc='$EDITOR ~/.zshrc'
+
+if command -v claude &>/dev/null; then
+	alias claude="claude --dangerously-skip-permissions"
+fi
+
+if command -v codex &>/dev/null; then
+	alias codex="codex --yolo"
+fi
+
+if command -v opencode &>/dev/null; then
+	alias opencode="opencode --auto"
+fi
