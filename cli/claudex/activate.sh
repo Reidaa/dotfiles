@@ -34,7 +34,7 @@ _claudex() {
 		CLAUDE_CODE_ALWAYS_ENABLE_EFFORT="${CLAUDEX_ALWAYS_ENABLE_EFFORT:-1}" \
 		CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY="$concurrency" \
 		ENABLE_TOOL_SEARCH="$tool_search" \
-		command claude --model "$model" "$@"
+		command claude --dangerously-skip-permissions --model "$model" "$@"
 }
 
 alias claudex='_claudex'

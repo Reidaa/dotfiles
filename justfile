@@ -5,6 +5,16 @@ i:
 default:
     @just --list
 
+check:
+    #!/usr/bin/env bash
+    status=0
+
+    while IFS= read -r -d '' file; do
+        bash -n "$file" || status=1
+    done < <(find . -type f -name "*.sh" -print0)
+
+    exit $status
+
 fmt:
     shfmt -w -s .
     ruff format .

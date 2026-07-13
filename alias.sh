@@ -10,8 +10,8 @@ alias ll="ls -l"
 alias la="ls -la"
 
 if command -v nvim &>/dev/null; then
-  alias vim="nvim"
-  alias vi="nvim"
+	alias vim="nvim"
+	alias vi="nvim"
 fi
 
 if command -v copilot &>/dev/null; then
