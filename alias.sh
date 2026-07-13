@@ -5,6 +5,14 @@
 # alias make="make -j$(nproc)"
 
 alias grep="grep --color=auto"
+alias ls="eza"
+alias ll="ls -l"
+alias la="ls -la"
+
+if command -v nvim &>/dev/null; then
+  alias vim="nvim"
+  alias vi="nvim"
+fi
 
 if command -v copilot &>/dev/null; then
 	alias copilot="copilot --yolo"
