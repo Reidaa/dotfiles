@@ -27,7 +27,3 @@ fi
 if command -v codex &>/dev/null; then
 	alias codex="codex --yolo"
 fi
-
-if command -v opencode &>/dev/null; then
-	alias opencode="opencode --auto"
-fi
