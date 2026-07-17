@@ -7,4 +7,3 @@ Instructions for AI coding agents working with this codebase
 ## Autoimprovement
 
 - Suggest to add new rules to AGENTS.md based on user input or PR comments, when a change request could be generalized as a rule.
-- Suggest updates to the README.md file according to feature changes or additions
