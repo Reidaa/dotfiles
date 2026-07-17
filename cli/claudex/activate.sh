@@ -9,6 +9,11 @@ if [[ -r $claudex_config ]]; then
 fi
 
 _claudex() {
+	if [[ -z ${CLAUDEX_API_KEY:-} ]]; then
+		echo "claudex: set CLAUDEX_API_KEY" >&2
+		return 1
+	fi
+
 	local base_url="${CLAUDEX_BASE_URL:-http://127.0.0.1:8317}"
 	local model="${CLAUDEX_MODEL:-gpt-5.6-sol}"
 	local subagent_model="${CLAUDEX_SUBAGENT_MODEL:-$model}"
@@ -18,11 +23,6 @@ _claudex() {
 	if ! command -v claude >/dev/null 2>&1; then
 		echo "claudex: Claude Code is not installed or is not in PATH" >&2
 		return 127
-	fi
-
-	if [[ -z ${CLAUDEX_API_KEY:-} ]]; then
-		echo "claudex: set CLAUDEX_API_KEY in $claudex_config" >&2
-		return 1
 	fi
 
 	ANTHROPIC_BASE_URL="$base_url" \
@@ -37,4 +37,5 @@ _claudex() {
 		command claude --dangerously-skip-permissions --model "$model" "$@"
 }
 
-alias claudex='_claudex'
+alias claudex='CLAUDEX_SUBAGENT_MODEL=gpt-5.6-terra _claudex'
+alias claude-kimi="CLAUDEX_MODEL=kimi-k3 CLAUDEX_SUBAGENT_MODEL=kimi-k3 _claudex"
