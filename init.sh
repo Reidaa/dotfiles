@@ -28,7 +28,6 @@ source_aliases
 
 run_installer "${script_dir}/zsh/autosuggestions/install.sh"
 run_installer "${script_dir}/zsh/syntax-highlighting/install.sh"
-run_installer "${script_dir}/starship/install.sh"
 
 for installer in "${script_dir}"/cli/*/install.sh; do
 	run_installer "$installer"
