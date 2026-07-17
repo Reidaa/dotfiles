@@ -8,6 +8,8 @@ alias grep="grep --color=auto"
 alias ls="eza"
 alias ll="ls -l"
 alias la="ls -la"
+alias zsh-edit='$EDITOR ~/.zshrc'
+alias zsh-source="source ~/.zshrc"
 
 if command -v nvim &>/dev/null; then
 	alias vim="nvim"
@@ -17,8 +19,6 @@ fi
 if command -v copilot &>/dev/null; then
 	alias copilot="copilot --yolo"
 fi
-
-alias zshrc='$EDITOR ~/.zshrc'
 
 if command -v claude &>/dev/null; then
 	alias claude="claude --dangerously-skip-permissions"
