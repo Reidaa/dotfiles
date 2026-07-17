@@ -37,3 +37,6 @@ clean:
     find . -type d -name "__pycache__" -delete
     rm -rf dist build .egg-info .ruff_cache
 
+
+pre-commit:
+    uv run pre-commit run --all-files

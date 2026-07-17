@@ -6,7 +6,7 @@ set -x
 # Function to check if a file exists
 # Usage: file_exists /path/to/file
 file_exists() {
-	if [ -a "$1" ]; then
+	if [ -e "$1" ]; then
 		echo "File exists: $1"
 		return 0
 	else

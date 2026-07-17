@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+
 # Copied to ~/.config/claudex/config.zsh by install.sh.
 # Use the same key here and in CLIProxyAPI's `api-keys` configuration.
 export CLAUDEX_API_KEY=""

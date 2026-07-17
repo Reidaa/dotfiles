@@ -12,7 +12,10 @@ python3 "${repo_root}/.template/install_package.py" \
 	--script https://mise.run
 
 if ! string_in_file "mise" "${HOME}/.zshrc"; then
-	echo 'eval "$(mise activate zsh)"' >>"${HOME}/.zshrc"
+	cat >>"${HOME}/.zshrc" <<'EOF'
+
+eval "$(mise activate zsh)"
+EOF
 else
 	echo "mise already sourced in .zshrc"
 fi

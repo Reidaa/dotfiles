@@ -12,7 +12,10 @@ python3 "${repo_root}/.template/install_package.py" \
 	--script https://setup.atuin.sh
 
 if ! string_in_file "atuin" "${HOME}/.zshrc"; then
-	echo 'eval "$(atuin init zsh)"' >>"${HOME}/.zshrc"
+	cat >>"${HOME}/.zshrc" <<'EOF'
+
+eval "$(atuin init zsh)"
+EOF
 else
 	echo "atuin already sourced in .zshrc"
 fi

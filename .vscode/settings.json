@@ -6,10 +6,5 @@
     },
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff"
-    },
-    "github.copilot.chat.commitMessageGeneration.instructions": [
-        {
-            "text": "Use Conventional Commits. Keep the subject under 72 characters."
-        }
-    ]
+    }
 }
