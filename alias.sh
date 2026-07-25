@@ -10,6 +10,7 @@ alias ll="ls -l"
 alias la="ls -la"
 alias zsh-edit='$EDITOR ~/.zshrc'
 alias zsh-source="source ~/.zshrc"
+alias ssh-edit='$EDITOR ~/.ssh/config'
 
 if command -v nvim &>/dev/null; then
 	alias vim="nvim"
