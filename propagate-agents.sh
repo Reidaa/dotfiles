@@ -3,7 +3,7 @@
 set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-source_file="${script_dir}/AGENTS.md"
+source_file="${script_dir}/llm/AGENTS.md"
 
 if [[ ! -f $source_file ]]; then
 	printf 'Source file not found: %s\n' "$source_file" >&2

@@ -32,4 +32,5 @@ run_installer "${script_dir}/zsh/syntax-highlighting/install.sh"
 for installer in "${script_dir}"/cli/*/install.sh; do
 	run_installer "$installer"
 done
-# . my/install.sh
+
+. my/install.sh
