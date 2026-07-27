@@ -9,4 +9,4 @@ if ! command -v opencode >/dev/null 2>&1; then
 	exit 127
 fi
 
-exec opencode run --agent build -m "opencode-go/kimi-k2.7-code" "$prompt"
+exec opencode run --agent build -m "openai/gpt-5.6-luna" "$prompt"
