@@ -1,0 +1,10 @@
+{
+    "attribution": {
+        "commit": "",
+        "pr": ""
+    },
+  "tui": "fullscreen",
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
+  "switchModelsOnFlag": false
+}
