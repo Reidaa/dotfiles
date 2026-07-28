@@ -28,3 +28,7 @@ fi
 if command -v codex &>/dev/null; then
 	alias codex="codex --yolo"
 fi
+
+if command -v code &>/dev/null; then
+	alias dotfiles-edit="code $HOME/.dotfiles"
+fi
