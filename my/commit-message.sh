@@ -9,4 +9,4 @@ if ! command -v opencode >/dev/null 2>&1; then
 	exit 127
 fi
 
-exec opencode run --agent build -m "openai/gpt-5.6-terra" "$prompt"
+exec opencode run --agent build -m "openai/gpt-5.6-sol" "$prompt"
