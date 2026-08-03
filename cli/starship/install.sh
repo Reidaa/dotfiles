@@ -18,3 +18,18 @@ EOF
 else
 	echo "starship already sourced in .zshrc"
 fi
+
+mkdir -p "$HOME/.config"
+
+confs=(
+	"${script_dir}/starship.toml,$HOME/.config/starship.toml"
+)
+
+for conf in "${confs[@]}"; do
+	IFS=',' read -r src dest <<<"$conf"
+	mkdir -p "$(dirname "$dest")"
+	rm -f "$dest"
+	if [ -f "$src" ] && [ ! -e "$dest" ]; then
+		ln -s "$src" "$dest"
+	fi
+done

@@ -18,7 +18,6 @@ file_exists() {
 mkdir -p "$HOME/.config"
 
 confs=(
-	"$(pwd)/starship/starship.toml,$HOME/.config/starship/starship.toml"
 	"$(pwd)/tmux/tmux.conf,$HOME/.tmux.conf"
 )
 
