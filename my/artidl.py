@@ -1,68 +1,48 @@
 #!/usr/bin/env python3
+"""Download a tar.gz from Artifactory and extract it under /tmp."""
 
 import argparse
-import os
-import shutil
-import subprocess
-import sys
-import tempfile
+import base64
 import getpass
-
-
-def download_file(url: str, destination: str) -> None:
-    print(f"Downloading {url} to {destination}")
-    username = input("Username: ")
-    password = getpass.getpass("Password: ")
-
-    if shutil.which("curl") is None:
-        raise RuntimeError("curl is required but was not found in PATH")
-    subprocess.run(
-        [
-            "curl",
-            "--fail",
-            "--location",
-            "-u",
-            f"{username}:{password}",
-            "--output",
-            destination,
-            url,
-        ],
-        check=True,
-    )
-
-
-def extract_archive(archive_path: str, target_dir: str) -> None:
-    print(f"Extracting archive into {target_dir}")
-    os.makedirs(target_dir, exist_ok=True)
-    subprocess.run(
-        ["tar", "-xzf", archive_path, "-C", target_dir],
-        check=True,
-    )
+import sys
+import tarfile
+import tempfile
+import urllib.request
 
 
 def artidl(archive_url: str) -> None:
-    url_parts = archive_url.split("/")
-    target_dir = "/tmp/" + "/".join(url_parts[-3:-1])
+    # Mirror the source layout: /tmp/<second-to-last>/<last-but-one> path segments.
+    target_dir = "/tmp/" + "/".join(archive_url.split("/")[-3:-1])
 
-    os.makedirs(target_dir, exist_ok=True)
-    with tempfile.NamedTemporaryFile(suffix=".tar.gz") as temp_file:
-        temp_archive_path = temp_file.name
-        download_file(archive_url, temp_archive_path)
-        extract_archive(temp_archive_path, target_dir)
+    credentials = f"{input('Username: ')}:{getpass.getpass('Password: ')}"
+    request = urllib.request.Request(
+        archive_url,
+        headers={
+            "Authorization": "Basic " + base64.b64encode(credentials.encode()).decode()
+        },
+    )
+
+    print(f"Downloading {archive_url}")
+    with (
+        urllib.request.urlopen(request) as response,
+        tempfile.TemporaryFile() as archive,
+    ):
+        while chunk := response.read(1 << 20):
+            archive.write(chunk)
+        archive.seek(0)
+        print(f"Extracting into {target_dir}")
+        with tarfile.open(fileobj=archive, mode="r:gz") as tar:
+            tar.extractall(target_dir, filter="data")
     print("Done")
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Download and extract an archive from Artifactory"
-    )
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("archive_url", help="Archive URL to download")
-    args = parser.parse_args()
-
     try:
-        artidl(args.archive_url)
+        artidl(parser.parse_args().archive_url)
         return 0
-    except Exception as exc:
+    except (OSError, tarfile.TarError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 

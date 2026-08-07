@@ -5,13 +5,11 @@ set -euo pipefail
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${script_dir}/../.." && pwd)"
 
-. "${repo_root}/.template/lib.sh"
-
 python3 "${repo_root}/.template/install_package.py" \
 	--brew atuin \
 	--script https://setup.atuin.sh
 
-if ! string_in_file "atuin" "${HOME}/.zshrc"; then
+if ! grep -Fq -- "atuin" "${HOME}/.zshrc"; then
 	cat >>"${HOME}/.zshrc" <<'EOF'
 
 eval "$(atuin init zsh)"

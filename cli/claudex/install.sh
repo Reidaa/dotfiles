@@ -5,8 +5,6 @@ set -euo pipefail
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${script_dir}/../.." && pwd)"
 
-. "${repo_root}/.template/lib.sh"
-
 python3 "${repo_root}/.template/install_package.py" \
 	--brew cliproxyapi \
 	--command cliproxyapi \
@@ -30,7 +28,7 @@ fi
 
 touch "$zshrc"
 
-if ! string_in_file "$activation_line" "$zshrc"; then
+if ! grep -Fq -- "$activation_line" "$zshrc"; then
 	printf '\n%s\n' "$activation_line" >>"$zshrc"
 	echo "Added Claudex activation to $zshrc"
 else

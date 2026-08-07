@@ -9,7 +9,6 @@ exec python3 "${repo_root}/.template/install_package.py" \
 	--brew btop \
 	--apt btop \
 	--dnf btop \
-	--yum btop \
 	--pacman btop \
 	--apk btop \
 	--command btop

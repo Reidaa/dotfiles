@@ -1,19 +1,8 @@
-i:
-    uv tool install ruff
-    go install mvdan.cc/sh/v3/cmd/shfmt@latest
-
 default:
     @just --list
 
-check:
-    #!/usr/bin/env bash
-    status=0
-
-    while IFS= read -r -d '' file; do
-        bash -n "$file" || status=1
-    done < <(find . -type f -name "*.sh" -print0)
-
-    exit $status
+test:
+    python3 .template/test_install_package.py
 
 fmt:
     shfmt -w -s .

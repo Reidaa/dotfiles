@@ -1,9 +1,5 @@
 # shellcheck shell=bash
 
-# alias ls="ls -aF"
-# alias ll="ls -l"
-# alias make="make -j$(nproc)"
-
 alias grep="grep --color=auto"
 alias ls="eza"
 alias ll="ls -l"
@@ -30,5 +26,5 @@ if command -v codex &>/dev/null; then
 fi
 
 if command -v code &>/dev/null; then
-	alias dotfiles-edit="code $HOME/.dotfiles"
+	alias dotfiles-edit='code "$HOME/.dotfiles"'
 fi
