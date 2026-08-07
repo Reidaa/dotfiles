@@ -26,8 +26,6 @@ run_installer() {
 
 source_aliases
 
-run_installer "${script_dir}/zsh/install.sh"
-
 for installer in "${script_dir}"/cli/*/install.sh; do
 	run_installer "$installer"
 done
