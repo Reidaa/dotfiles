@@ -21,6 +21,7 @@ destinations=(
 	"${HOME}/.codex/AGENTS.md"
 	"${HOME}/.claude/CLAUDE.md"
 	"${HOME}/.config/opencode/AGENTS.md"
+	"${HOME}/.pi/agent/AGENTS.md"
 )
 
 for destination in "${destinations[@]}"; do
