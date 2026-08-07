@@ -22,11 +22,6 @@ Instructions for AI coding agents working with this codebase
 - Pin every `uses:` to a full **commit SHA** with an exact version comment: `uses: owner/action@<commit-sha> # vX.Y.Z`.
 - Resolve to the commit, not the annotated-tag object: take the `refs/tags/vX^{}` line from `git ls-remote --tags`, or `gh api repos/<owner>/<repo>/git/refs/tags/<tag> --jq .object` peeled to a commit. Check with `git cat-file -t <sha>` → `commit`, not `tag`. Never pin a moving major tag (`v9`).
 
-## Source Code Reference
-
-Source code for dependencies is available in `~/.opensrc/` for deeper understanding of implementation details.
-Use this source code when you need to understand how a package works internally, not just its typers/interface.
-
 ## Autoimprovement
 
 - Suggest to add new rules to AGENTS.md based on user input or PR comments, when a change request could be generalized as a rule.
