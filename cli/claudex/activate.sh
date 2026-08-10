@@ -36,3 +36,36 @@ claudex() {
 		ENABLE_TOOL_SEARCH="${CLAUDEX_ENABLE_TOOL_SEARCH:-false}" \
 		command claude --dangerously-skip-permissions --model "$CLAUDEX_MODEL" "$@"
 }
+
+# Same proxy, but for Codex. CLAUDEX_MODEL's "name(effort)" syntax is split
+# into Codex's separate model / reasoning-effort settings.
+codexx() {
+	local missing=""
+	for v in CLAUDEX_API_KEY CLAUDEX_BASE_URL CLAUDEX_MODEL; do
+		[[ -n ${(P)v} ]] || missing+=" $v"
+	done
+
+	if [[ -n $missing ]]; then
+		echo "codexx: missing$missing" >&2
+		return 1
+	fi
+
+	if ! command -v codex >/dev/null 2>&1; then
+		echo "codexx: Codex is not installed or is not in PATH" >&2
+		return 127
+	fi
+
+	local model="${CLAUDEX_MODEL%%\(*}"
+	local effort="${${CLAUDEX_MODEL#*\(}%\)}"
+	[[ $effort == "$CLAUDEX_MODEL" ]] && effort="medium"
+
+	command codex --yolo \
+		-c model="$model" \
+		-c model_reasoning_effort="$effort" \
+		-c model_provider=cliproxy \
+		-c model_providers.cliproxy.name=CLIProxyAPI \
+		-c model_providers.cliproxy.base_url="${CLAUDEX_BASE_URL}/v1" \
+		-c model_providers.cliproxy.env_key=CLAUDEX_API_KEY \
+		-c model_providers.cliproxy.wire_api=responses \
+		"$@"
+}

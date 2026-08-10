@@ -11,4 +11,6 @@ python3 "${repo_root}/.template/install_package.py" \
 	--script https://chatgpt.com/codex/install.sh
 
 mkdir -p "$HOME/.codex"
-ln -sfn "${script_dir}/config.toml" "$HOME/.codex/config.toml"
+
+rm -f "$HOME/.codex/config.toml"
+cp "${script_dir}/config.toml" "$HOME/.codex/config.toml"
