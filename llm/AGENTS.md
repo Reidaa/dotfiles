@@ -1,24 +1,44 @@
 # AGENTS.md
 
+- Do not do global installs without explicit approval from the user first.
+
+## Questions are read-only
+
+- A question is a request for an answer, not for changes.
+- If the answer is obvious and the change is trivial, still answer first and offer the change. Ask before making it.
+
 ## Coding Guidelines
 
-- Always strive for concise, simple solutions.
-- If a problem can be solved in a simpler way, propose it.
-- Write comments like the reader is new to the codebase but familiar with the goal of the project.
+- **Keeping it simple**:
+  - Always strive for concise, simple solutions.
+  - Choose the simplest implementation that fully meets the current requirements. Avoid speculative abstractions, configuration and indirection.
+  - If a problem can be solved in a simpler way, propose it.
+  - Remember YAGNI
+- **comments**:
+  - Write comments like the reader is new to the codebase but familiar with the goal of the project.
+  - Comments are a great way to clarify functionality and how code is used. Don't commend every line, but feel free to describe (concisely) how functions are used above function definitions, classes, etc
+  - Keep comments up to date! WHen making changers, it's important to things in sync.
+- **tests**:
+  - Use Test Driven Development (TDD) for all code you write. Write tests before writing the implementation code.
+  - Tests are good! Endless smoke tests, "regression tests" for feature deletions, etc, no. Test should be focused, not slop.
 - Before creating code, brainstorm 3 different approaches to solve the problem and sort them by their probable effectiveness. Then, choose the best approach and implement it.
 - Use logging to provide insight into failures. Don't use print for debugging. Don't use logging to hide stack traces.
-- Use Test Driven Development (TDD) for all code you write. Write tests before writing the implementation code.
 - Study how established products solve the problem before designing a solution. Adopt their proven patterns and conventions rather than inventing an approach from scratch.
-- Choose the simplest implementation that fully meets the current requirements. Avoid speculative abstractions, configuration and indirection.
 - Grow the system in layers. Start from the smallest version that works end to end and add each new capability on top of a product that already works. Never trade a working product for unfinished complexity.
 - Keep components modular and concerns clearly separated.
 - Prefer established, well-maintained libraries when they reduce overall complexity or improve reliability. Do not reimplement common functionality without a clear reason.
 - Lean on the dependency already in the project before writing your own implementation or adding packages. Do not assume a library lacks a capability without checking its documentation and types.
 - Make architectural decision for the long term. Do not accept a stopgap that only works for now and is meant to be replaced later.
 
+## Visual and design work
+
+- Do not edit real components first. For any non-trivial UI, layout, or copy change, build several distinc static mocks. Wait for a pick before implementing.
+- After every UI change, provide before-and-after screenshots or mockups. Use the inline preview when available; otherwise host the comparison through Tailscale and provide the URL.
+  - Unless explicitly ask not to, host the screenshots on litterbox
+
 ## Commit Guidelines
 
-- Do not commit unless specifically asked to.
+- Do not commit and/or push unless specifically asked to.
 - Use Conventional Commits.
 - Avoid overly verbose descriptions or unnecessary details.
 
