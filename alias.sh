@@ -13,10 +13,6 @@ if command -v nvim &>/dev/null; then
 	alias vi="nvim"
 fi
 
-if command -v copilot &>/dev/null; then
-	alias copilot="copilot --yolo"
-fi
-
 if command -v claude &>/dev/null; then
 	alias claude="claude --dangerously-skip-permissions"
 fi
