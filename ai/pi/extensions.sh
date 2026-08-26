@@ -8,7 +8,7 @@ fi
 exts=(
 	npm:pi-autoresearch
 	npm:pi-subagents
-	https://github.com/Reidaa/pi-cliproxyapi.git
+	# https://github.com/Reidaa/pi-cliproxyapi.git
 	git:github.com/DietrichGebert/ponytail
 	https://github.com/Reidaa/pi-websearch.git
 	https://github.com/Reidaa/pi-webfetch.git
