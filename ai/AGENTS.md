@@ -14,11 +14,11 @@
   - Choose the simplest implementation that fully meets the current requirements. Avoid speculative abstractions, configuration and indirection.
   - If a problem can be solved in a simpler way, propose it.
   - Remember YAGNI
-- **comments**:
+- **Comments**:
   - Write comments like the reader is new to the codebase but familiar with the goal of the project.
   - Comments are a great way to clarify functionality and how code is used. Don't commend every line, but feel free to describe (concisely) how functions are used above function definitions, classes, etc
   - Keep comments up to date! WHen making changers, it's important to things in sync.
-- **tests**:
+- **Testing**:
   - Use Test Driven Development (TDD) for all code you write. Write tests before writing the implementation code.
   - Tests are good! Endless smoke tests, "regression tests" for feature deletions, etc, no. Test should be focused, not slop.
 - Before creating code, brainstorm 3 different approaches to solve the problem and sort them by their probable effectiveness. Then, choose the best approach and implement it.

@@ -35,7 +35,7 @@ pi() {
 	fi
 
 	printf 'pi: Copying settings...\n'
-	cp "${script_dir}/pi/settings.json" "${HOME}/.pi/settings.json"
+	cp "${script_dir}/pi/settings.json" "${HOME}/.pi/agent/settings.json"
 
 	printf 'pi: Installing extensions...\n'
 	bash "${script_dir}/pi/extensions.sh"
@@ -92,6 +92,6 @@ codex() {
 }
 
 # skills
-# pi
+pi
 claude
 codex

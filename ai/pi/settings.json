@@ -4,6 +4,10 @@
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-sol",
   "defaultThinkingLevel": "high",
+  "subagent": {
+    "defaultModel": "openai-codex/gpt-5.6-luna",
+    "defaultThinkingLevel": "max"
+  },
   "packages": [
     "npm:pi-autoresearch",
     "npm:pi-subagents",
