@@ -14,17 +14,28 @@ esac
 plugins_dir="${HOME}/.local/zsh/plugins"
 zshrc="${HOME}/.zshrc"
 
-mkdir -p "$plugins_dir"
+brew_prefix=""
+if command -v brew >/dev/null 2>&1; then
+	brew install zsh-autosuggestions zsh-syntax-highlighting
+	brew_prefix="$(brew --prefix)"
+	bash "$(dirname "${BASH_SOURCE[0]}")/cleanup-legacy.sh" "$brew_prefix"
+else
+	mkdir -p "$plugins_dir"
+fi
+
 touch "$zshrc"
 
 for plugin in zsh-autosuggestions zsh-syntax-highlighting; do
-	target="${plugins_dir}/${plugin}"
-	[ -d "$target" ] || git clone "https://github.com/zsh-users/${plugin}" "$target"
-
-	entry="source ${target}/${plugin}.zsh"
-	if grep -Fq "$entry" "$zshrc"; then
-		echo "${plugin} already sourced in .zshrc"
+	if [ -n "$brew_prefix" ]; then
+		plugin_path="${brew_prefix}/share/${plugin}/${plugin}.zsh"
 	else
-		echo "$entry" >>"$zshrc"
+		target="${plugins_dir}/${plugin}"
+		[ -d "$target" ] || git clone "https://github.com/zsh-users/${plugin}" "$target"
+		plugin_path="${target}/${plugin}.zsh"
+	fi
+
+	printf -v entry 'source %q' "$plugin_path"
+	if ! grep -Fxq -- "$entry" "$zshrc"; then
+		printf '\n%s\n' "$entry" >>"$zshrc"
 	fi
 done
