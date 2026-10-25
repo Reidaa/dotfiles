@@ -2,6 +2,14 @@
 
 - Do not do global installs without explicit approval from the user first.
 
+- Explain following ASD-STE100
+  1. Keep sentences short
+  2. One action per step
+  3. Say who does what
+  4. Give each thing one name and stick to it
+
+- If available, do not hesitate to split mundane works using subagents.
+
 ## Questions are read-only
 
 - A question is a request for an answer, not for changes.
@@ -41,6 +49,13 @@
 - Do not commit and/or push unless specifically asked to.
 - Use Conventional Commits.
 - Avoid overly verbose descriptions or unnecessary details.
+- Do not add attribution lines ("Generated with Claude Code", "Co-Authored-By: Claude") to commits or PR descriptions.
+
+## Distilling sources into skills
+
+- Do not write new procedures or code that the source does not contain.
+- Keep the source's scope qualifiers: product names, "not always", "in our setup".
+- If the source is wrong, correct it and say so in the skill.
 
 ## CI / GitHub Actions
 

@@ -21,10 +21,13 @@ skills() {
 		emilkowalski/skills
 		jakubkrehel/skills
 		vercel-labs/opensrc
+		michaelshimeles/skills
+		danyuchn/asd-ste100-skill
+		reidaa/agent-skills
 	)
 
 	for skill in "${skills[@]}"; do
-		npx skills@latest add "$skill" -y -g
+		npx skills@latest add -g "$skill"
 	done
 }
 
@@ -92,6 +95,6 @@ codex() {
 }
 
 # skills
-pi
+# pi
 claude
-codex
+# codex
