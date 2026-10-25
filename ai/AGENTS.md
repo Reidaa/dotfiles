@@ -64,5 +64,5 @@
 
 ## Autoimprovement
 
-- Suggest to add new rules to AGENTS.md based on user input or PR comments, when a change request could be generalized as a rule.
-- Suggest updates to the README.md file according to feature changes or additions
+- When a change request can be generalized as a rule, prefer adding it to the relevant `.agents/skills/` SKILL.md rather than appending to AGENTS.md. AGENTS.md should stay small and universal; domain-specific conventions belong in skills so they load only when needed. Create a new skill when no existing one fits.
+- Suggest updates to the README.md file according to feature changes or additions.
