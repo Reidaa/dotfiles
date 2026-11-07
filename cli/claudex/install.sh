@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Creates the claudex config from the example. zsh/rc.zsh sources activate.sh.
+# Creates the claudex config from the example. zsh/rc.zsh sources activate.zsh.
 
 set -euo pipefail
 

@@ -16,14 +16,13 @@ e2e *images="ubuntu:26.04 fedora:45 archlinux:base":
     done
     exit $status
 
-# Tracked .sh files only: `shfmt .` would also rewrite .venv, and it cannot
-# parse cli/claudex/activate.sh, which is zsh. Same list as the shfmt hook.
+# Tracked .sh files only: `shfmt .` would also rewrite .venv. Same list as the shfmt hook.
 fmt:
-    git ls-files -z '*.sh' ':!cli/claudex/activate.sh' | xargs -0 shfmt -w -s
+    git ls-files -z '*.sh' | xargs -0 shfmt -w -s
     ruff format .
 
 fmt-check:
-    git ls-files -z '*.sh' ':!cli/claudex/activate.sh' | xargs -0 shfmt -d -s
+    git ls-files -z '*.sh' | xargs -0 shfmt -d -s
     ruff format --check .
 
 lint:

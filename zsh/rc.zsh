@@ -55,7 +55,7 @@ source "${dotfiles_dir}/alias.sh"
 # shellcheck source=cli/bat/activate.sh
 source "${dotfiles_dir}/cli/bat/activate.sh"
 # shellcheck source=/dev/null
-source "${dotfiles_dir}/cli/claudex/activate.sh"
+source "${dotfiles_dir}/cli/claudex/activate.zsh"
 
 # Plugins cloned by cli/zsh/install.sh. zsh-syntax-highlighting must load last.
 for plugin in zsh-autosuggestions zsh-syntax-highlighting; do

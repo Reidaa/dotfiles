@@ -32,9 +32,8 @@ repos:
     hooks:
       - id: shfmt
         args: [--write, --simplify]
-        # shfmt parses bash, not zsh. activate.sh is zsh behind a .sh name.
+        # shfmt parses bash, not zsh.
         exclude_types: [zsh]
-        exclude: ^cli/claudex/activate\.sh$
 
   # Prebuilt binary instead of the Docker image: faster in CI, and it runs
   # where Docker does not.
