@@ -1,33 +1,35 @@
 #!/usr/bin/env bash
 # Installs the CLI tools in cli/brew/Brewfile with Homebrew, on Linux and macOS.
-# If Homebrew is missing, runs Homebrew's official installer. It needs sudo:
-# with a terminal it asks for your password (init.sh gives it the terminal);
-# with no terminal it runs non-interactively and needs passwordless sudo.
+# Homebrew must already be installed; this script does not install it. If brew
+# is missing, it reports it and exits 1.
 # Safe to run again: `brew bundle` skips what is already installed.
 
 set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
-# Homebrew's default prefix for this system. HOMEBREW_PREFIX overrides it.
-prefix="${HOMEBREW_PREFIX:-}"
-if [ -z "$prefix" ]; then
-	case "$(uname -s)/$(uname -m)" in
-	Darwin/arm64) prefix=/opt/homebrew ;;
-	Darwin/*) prefix=/usr/local ;;
-	*) prefix=/home/linuxbrew/.linuxbrew ;;
-	esac
-fi
+# Prints the path of brew, or nothing. brew is often not on PATH yet (only a
+# new shell runs zsh/rc.zsh), so also look in Homebrew's default prefixes.
+# HOMEBREW_PREFIX, when set, picks the prefix (install.sh and zsh/rc.zsh do
+# the same).
+find_brew() {
+	local candidate
+	if [ -n "${HOMEBREW_PREFIX:-}" ]; then
+		candidate="${HOMEBREW_PREFIX}/bin/brew"
+		if [ -x "$candidate" ]; then echo "$candidate"; fi
+		return 0
+	fi
+	for candidate in "$(command -v brew || true)" /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+		if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+			echo "$candidate"
+			return 0
+		fi
+	done
+}
 
-# brew is often not on PATH yet: the Homebrew installer does not change PATH,
-# and zsh/rc.zsh only adds it in a new shell.
-brew_bin="$(command -v brew || echo "${prefix}/bin/brew")"
-if [ ! -x "$brew_bin" ]; then
-	echo "Installing Homebrew to ${prefix}"
-	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-fi
-if [ ! -x "$brew_bin" ]; then
-	echo "Homebrew install failed: ${brew_bin} not found" >&2
+brew_bin="$(find_brew)"
+if [ -z "$brew_bin" ]; then
+	echo "Homebrew is not installed. Install it from https://brew.sh, then run this again." >&2
 	exit 1
 fi
 

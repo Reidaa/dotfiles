@@ -2,13 +2,13 @@
 # Started by tests/e2e/run.sh. Two modes:
 #   - Linux: runs as root inside a clean container. Sets up a fresh machine
 #     (git, curl, zsh, Homebrew's required packages, a non-root user `dev`
-#     with zsh as login shell and passwordless sudo, like an admin user).
-#     Homebrew is not installed, so this mode tests the Homebrew install too.
+#     with zsh as login shell), then installs Homebrew as dev.
 #   - macOS: runs on a GitHub macOS runner, not in a container. Uses the runner
 #     user with a new empty HOME and the PATH of a new Mac, so preinstalled
-#     tools do not count. Homebrew is preinstalled there, so this mode does
-#     not test the Homebrew install itself.
-# Then it pipes install.sh into bash twice, like `curl ... | bash`.
+#     tools do not count. Homebrew is preinstalled there.
+# Then it pipes install.sh into bash twice, like `curl ... | bash`. install.sh
+# needs Homebrew and does not install it, so installing Homebrew is part of
+# the machine setup here, not of the test.
 # DOTFILES_REPO points at the snapshot in $E2E_DIR (default /mnt/e2e).
 #
 # Checks (C2, C3, C5, C6 of the bootstrap contract):
@@ -62,6 +62,7 @@ setup_linux() {
 	user=dev
 	# Homebrew's installer runs sudo to create /home/linuxbrew. With no
 	# terminal it cannot ask for a password, so allow sudo without one.
+	# install_homebrew removes this again.
 	echo 'dev ALL=(ALL) NOPASSWD: ALL' >/etc/sudoers.d/dev
 	chmod 0440 /etc/sudoers.d/dev
 
@@ -124,6 +125,19 @@ as_dev() {
 		(cd "$home" && runuser -u "$user" -- env -i "${user_env[@]}" "$@")
 	fi
 }
+
+# Linux only: installs Homebrew the official way (https://brew.sh) as dev,
+# then removes dev's sudo, so the test also shows that the bootstrap itself
+# needs no sudo. With no terminal, Homebrew's installer runs non-interactively.
+install_homebrew() {
+	echo "::group::install Homebrew (machine setup)"
+	local homebrew_sh
+	homebrew_sh="$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+	as_dev /bin/bash -c "$homebrew_sh"
+	rm /etc/sudoers.d/dev
+	echo "::endgroup::"
+}
+if [ "$(uname -s)" = Linux ]; then install_homebrew; fi
 
 failures=()
 fail() {

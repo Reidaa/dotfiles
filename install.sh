@@ -6,9 +6,26 @@
 # existing clone, then runs init.sh from it. The clone must stay on disk:
 # .zshrc sources files from it.
 #
+# Needs git and Homebrew. It does not install Homebrew: if brew is missing, it
+# reports it and exits before it changes anything.
+#
 # Overrides: DOTFILES_DIR (clone location), DOTFILES_REPO (clone source).
 
-# Everything is inside main, which runs on the last line. If the download
+# True if Homebrew is installed. brew is often not on PATH yet, so also look
+# in Homebrew's default prefixes. HOMEBREW_PREFIX, when set, picks the prefix
+# (cli/brew/install.sh and zsh/rc.zsh use the same lookup).
+has_brew() {
+	if [ -n "${HOMEBREW_PREFIX:-}" ]; then
+		[ -x "${HOMEBREW_PREFIX}/bin/brew" ]
+		return
+	fi
+	command -v brew >/dev/null 2>&1 ||
+		[ -x /opt/homebrew/bin/brew ] ||
+		[ -x /usr/local/bin/brew ] ||
+		[ -x /home/linuxbrew/.linuxbrew/bin/brew ]
+}
+
+# Everything runs inside main, called on the last line. If the download
 # stops halfway, bash never runs a partial script.
 main() {
 	set -euo pipefail
@@ -18,6 +35,11 @@ main() {
 
 	if ! command -v git >/dev/null 2>&1; then
 		echo "git is required but was not found in PATH" >&2
+		exit 1
+	fi
+
+	if ! has_brew; then
+		echo "Homebrew is required but was not found. Install it from https://brew.sh, then run this installer again." >&2
 		exit 1
 	fi
 
@@ -32,14 +54,7 @@ main() {
 		git clone "$repo" "$dir"
 	fi
 
-	# Under `curl | bash`, stdin is the pipe, so installer prompts would read
-	# EOF and cancel. Give init.sh the terminal when there is one (rustup does
-	# the same); without a terminal (CI), prompts keep their default answer.
-	if (exec </dev/tty) 2>/dev/null; then
-		bash "${dir}/init.sh" </dev/tty
-	else
-		bash "${dir}/init.sh"
-	fi
+	bash "${dir}/init.sh"
 }
 
 main "$@"
