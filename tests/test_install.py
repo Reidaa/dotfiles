@@ -44,6 +44,7 @@ class InstallTests(unittest.TestCase):
     def run_install(self) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             ["bash"],
+            check=False,
             input=INSTALL_SH.read_text(),
             env={
                 "HOME": str(self.home),

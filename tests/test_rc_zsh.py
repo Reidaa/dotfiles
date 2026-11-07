@@ -41,6 +41,7 @@ class RcZshTests(unittest.TestCase):
         # empty PATH does not have.
         return subprocess.run(
             [ZSH, "--no-globalrcs", "-i", "-c", command],
+            check=False,
             # HOMEBREW_PREFIX keeps rc.zsh away from a real Homebrew on this machine.
             env={
                 "HOME": str(self.home),

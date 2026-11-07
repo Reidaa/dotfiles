@@ -151,7 +151,9 @@ run_install 1
 # $(( )) strips the spaces that BSD wc (macOS) puts before the number.
 before_size="$(($(wc -c </tmp/zshrc.before)))"
 added="$(tail -c +"$((before_size + 1))" "$zshrc" 2>/dev/null || true)"
-if ! head -c "$before_size" "$zshrc" 2>/dev/null | cmp -s - /tmp/zshrc.before ||
+# An empty prefix always matches. Skip head then: BSD head (macOS) rejects -c 0.
+if ! { [ "$before_size" -eq 0 ] ||
+	head -c "$before_size" "$zshrc" 2>/dev/null | cmp -s - /tmp/zshrc.before; } ||
 	[ "$(grep -c . <<<"$added")" != 1 ] || ! grep -q 'zsh/rc.zsh' <<<"$added"; then
 	fail "run 1 must append only one line that sources zsh/rc.zsh to .zshrc; diff:"
 	diff /tmp/zshrc.before "$zshrc" >&2 || true

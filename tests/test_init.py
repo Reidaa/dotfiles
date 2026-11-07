@@ -40,6 +40,7 @@ class InitTests(unittest.TestCase):
         # Run from another directory: init.sh must not depend on the cwd (C1).
         return subprocess.run(
             ["bash", str(self.repo / "init.sh")],
+            check=False,
             cwd=self.home,
             env={"HOME": str(self.home), "PATH": "/usr/bin:/bin"},
             capture_output=True,

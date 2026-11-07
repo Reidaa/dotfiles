@@ -28,7 +28,9 @@ lint:
     #!/usr/bin/env bash
     status=0
 
-    shellcheck -x ./**/*.sh || status=1
+    # find, not a ** glob: ** needs bash's globstar, which macOS bash 3.2 lacks.
+    find . \( -path ./.git -o -path ./.venv \) -prune -o -name '*.sh' -type f -print0 |
+        xargs -0 shellcheck -x || status=1
     ruff check . || status=1
 
     exit $status
