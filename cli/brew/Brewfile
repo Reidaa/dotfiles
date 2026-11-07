@@ -1,0 +1,16 @@
+# CLI tools for every machine, Linux and macOS. cli/brew/install.sh installs
+# them with `brew bundle`. Command names that differ are in the comments.
+brew "atuin"
+brew "bat"
+brew "btop"
+brew "dua-cli"    # dua
+brew "eza"
+brew "just"
+brew "mise"
+brew "neovim"     # nvim
+brew "ripgrep"    # rg
+brew "starship"
+brew "tealdeer"   # tldr
+brew "television" # tv
+# codex is a cask, not a formula. Homebrew installs casks on Linux too.
+cask "codex"

@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
+# Creates the claudex config from the example. zsh/rc.zsh sources activate.sh.
 
 set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 config_file="${script_dir}/config.zsh"
-zshrc="${HOME}/.zshrc"
-activation_line="source ${script_dir}/activate.sh"
 
 if [[ ! -e $config_file ]]; then
 	cp "${script_dir}/config.example.zsh" "$config_file"
@@ -15,16 +14,6 @@ else
 	echo "Preserving existing $config_file"
 fi
 
-touch "$zshrc"
-
-if ! grep -Fq -- "$activation_line" "$zshrc"; then
-	printf '\n%s\n' "$activation_line" >>"$zshrc"
-	echo "Added Claudex activation to $zshrc"
-else
-	echo "Claudex already sourced in $zshrc"
-fi
-
 echo
 echo "Claudex is installed and ready to configure."
-echo "Set your values in $config_file, then reload your shell with:"
-echo "  source $zshrc"
+echo "Set your values in $config_file, then open a new shell."

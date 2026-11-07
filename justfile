@@ -1,9 +1,20 @@
 default:
     @just --list
 
+# Unit tests. Discovery runs every tests/test_*.py, so new test files need no edit here.
 test:
-    python3 .template/test_install_package.py
-    python3 tests/test_install.py
+    python3 -m unittest discover -s tests -p 'test_*.py'
+
+# Run the bootstrap end to end in clean containers (podman or docker).
+# Tests the committed HEAD. Keep the images in sync with the e2e job in ci.yaml.
+# Linux only: the macOS e2e runs only in CI (tests/e2e/check.sh).
+e2e *images="ubuntu:26.04 fedora:45 archlinux:base":
+    #!/usr/bin/env bash
+    status=0
+    for image in {{ images }}; do
+        tests/e2e/run.sh "$image" || status=1
+    done
+    exit $status
 
 fmt:
     shfmt -w -s .
@@ -25,7 +36,7 @@ lint:
 clean:
     find . -type f -name "*.pyc" -delete
     find . -type d -name "__pycache__" -delete
-    rm -rf dist build .egg-info .ruff_cache
+    rm -rf .ruff_cache
 
 
 pre-commit:

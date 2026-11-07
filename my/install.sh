@@ -2,8 +2,7 @@
 
 set -euo pipefail
 
-script_path="${BASH_SOURCE[0]:-$0}"
-script_dir=$(CDPATH='' cd -- "$(dirname -- "$script_path")" && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
 mkdir -p "$HOME/.local/bin"
 

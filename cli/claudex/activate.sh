@@ -1,5 +1,7 @@
 # shellcheck shell=bash
-# Sourced from ~/.zshrc; config lives next to this file (gitignored).
+# This file is zsh; shellcheck checks it as bash, so skip its zsh-only expansions.
+# shellcheck disable=SC2296,SC2299
+# Sourced from zsh/rc.zsh; config lives next to this file (gitignored).
 
 claudex_config="${0:A:h}/config.zsh"
 
