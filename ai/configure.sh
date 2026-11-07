@@ -22,16 +22,18 @@ link_agents_md() {
 
 skills() {
 	local skills=(
+		reidaa/agent-skills
 		emilkowalski/skills
 		jakubkrehel/skills
 		vercel-labs/opensrc
 		michaelshimeles/skills
 		danyuchn/asd-ste100-skill
-		reidaa/agent-skills
+		t3dotgg/tstack
+		boristane/agent-skills
 	)
 
 	for skill in "${skills[@]}"; do
-		npx skills@latest add -g "$skill"
+		npx skills@latest add -y -g "$skill"
 	done
 }
 
