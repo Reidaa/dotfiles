@@ -6,7 +6,7 @@ test:
     python3 -m unittest discover -s tests -p 'test_*.py'
 
 # Run the bootstrap end to end in clean containers (podman or docker).
-# Tests the committed HEAD. Keep the images in sync with the e2e job in ci.yaml.
+# Tests the committed HEAD. Keep the images in sync with the e2e job in bootstrap.yaml.
 # Linux only: the macOS e2e runs only in CI (tests/e2e/check.sh).
 e2e *images="ubuntu:26.04 fedora:45 archlinux:base":
     #!/usr/bin/env bash
@@ -16,12 +16,13 @@ e2e *images="ubuntu:26.04 fedora:45 archlinux:base":
     done
     exit $status
 
+# Tracked .sh files only: `shfmt .` would also rewrite .venv. Same list as the shfmt hook.
 fmt:
-    shfmt -w -s .
+    git ls-files -z '*.sh' | xargs -0 shfmt -w -s
     ruff format .
 
 fmt-check:
-    shfmt -l -s .
+    git ls-files -z '*.sh' | xargs -0 shfmt -d -s
     ruff format --check .
 
 lint:

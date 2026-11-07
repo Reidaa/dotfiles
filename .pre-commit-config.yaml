@@ -13,8 +13,34 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
-  - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.11.0
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.3
+    hooks:
+      - id: codespell
+        exclude: ^uv\.lock$
+
+  # ruff, shfmt and shellcheck: same versions as mise.toml, so the hooks and
+  # `just fmt` / `just lint` agree.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.3
+    hooks:
+      - id: ruff-check
+      - id: ruff-format
+
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.14.1-1
+    hooks:
+      - id: shfmt
+        args: [--write, --simplify]
+        # shfmt parses bash, not zsh.
+        exclude_types: [zsh]
+
+  # Prebuilt binary instead of the Docker image: faster in CI, and it runs
+  # where Docker does not.
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
     hooks:
       - id: shellcheck
         args: ["-x"]
+        # Check the zsh files too; they carry `# shellcheck shell=bash`.
+        exclude_types: []
