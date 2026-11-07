@@ -10,6 +10,14 @@ name: Bootstrap
       - "**.md"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+# A new push to a branch cancels the run still going for its previous push.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # Unit tests: every tests/test_*.py (same command as `just test`).
   # Also on macOS: the tests run the scripts with /bin/bash, which is bash 3.2
@@ -17,8 +25,7 @@ jobs:
   test:
     name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    permissions:
-      contents: read
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -42,11 +49,12 @@ jobs:
   # Linux runs in containers. macOS has no container image, so it runs on a
   # macOS runner (Apple Silicon) with a new empty HOME; see tests/e2e/check.sh.
   # Keep the Linux images in sync with the `e2e` recipe in the justfile.
+  # A run takes about 2 minutes; the timeout stops a hung `curl | bash`
+  # (for example one waiting on stdin) long before the 6-hour default.
   e2e:
     name: e2e (${{ matrix.image }})
     runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
-    permissions:
-      contents: read
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
