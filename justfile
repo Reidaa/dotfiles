@@ -3,6 +3,7 @@ default:
 
 test:
     python3 .template/test_install_package.py
+    python3 tests/test_install.py
 
 fmt:
     shfmt -w -s .

@@ -30,4 +30,4 @@ for installer in "${script_dir}"/cli/*/install.sh; do
 	run_installer "$installer"
 done
 
-. my/install.sh
+run_installer "${script_dir}/my/install.sh"
