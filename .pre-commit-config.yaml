@@ -22,7 +22,7 @@ repos:
   # ruff, shfmt and shellcheck: same versions as mise.toml, so the hooks and
   # `just fmt` / `just lint` agree.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.17.3
+    rev: v0.17.4
     hooks:
       - id: ruff-check
       - id: ruff-format
